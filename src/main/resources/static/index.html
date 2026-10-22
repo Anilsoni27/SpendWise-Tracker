@@ -15,14 +15,13 @@
             } catch(e) {}
         })();
     </script>
-    <link rel="stylesheet" href="/css/styles.css?v=3.9.0">
+    <link rel="stylesheet" href="/css/styles.css?v=4.0.0">
     <!-- Chart.js for simple, clean charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <!-- Ambient Living Dynamic Background (Tech grid, moving aura orbs & cursor spotlight) -->
+    <!-- Ambient Living Dynamic Background (Moving aura orbs & cursor spotlight) -->
     <div class="ambient-background" aria-hidden="true">
-        <div class="ambient-grid"></div>
         <div class="ambient-glow ambient-glow-1"></div>
         <div class="ambient-glow ambient-glow-2"></div>
         <div class="ambient-glow ambient-glow-3"></div>
@@ -123,26 +122,64 @@
     <main class="container page-content">
         <!-- Summary Totals Row -->
         <section class="summary-grid" aria-label="Spending Summary">
+            <!-- Card 1: Today -->
             <div class="summary-card">
-                <div class="summary-label">Today's Spending</div>
+                <div class="summary-card-header">
+                    <span class="summary-label">Today's Spending</span>
+                    <div class="summary-icon-badge" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                </div>
                 <div class="summary-value" id="statTodayTotal">₹0.00</div>
                 <div class="summary-sub" id="statYesterdaySub">Yesterday: ₹0.00</div>
             </div>
 
+            <!-- Card 2: This Month -->
             <div class="summary-card">
-                <div class="summary-label">This Month's Spending</div>
+                <div class="summary-card-header">
+                    <span class="summary-label">This Month's Spending</span>
+                    <div class="summary-icon-badge" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </div>
+                </div>
                 <div class="summary-value" id="statMonthTotal">₹0.00</div>
                 <div class="summary-sub" id="statLastMonthSub">Last month: ₹0.00</div>
             </div>
 
+            <!-- Card 3: Average -->
             <div class="summary-card">
-                <div class="summary-label">Average per Expense</div>
+                <div class="summary-card-header">
+                    <span class="summary-label">Average per Expense</span>
+                    <div class="summary-icon-badge" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+                        </svg>
+                    </div>
+                </div>
                 <div class="summary-value" id="statAvgExpense">₹0.00</div>
                 <div class="summary-sub" id="statTotalCountSub">0 transactions recorded</div>
             </div>
 
+            <!-- Card 4: Top Category -->
             <div class="summary-card">
-                <div class="summary-label">Top Spending Category</div>
+                <div class="summary-card-header">
+                    <span class="summary-label">Top Spending Category</span>
+                    <div class="summary-icon-badge" aria-hidden="true">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                    </div>
+                </div>
                 <div class="summary-value summary-value-sm" id="statTopCategory">—</div>
                 <div class="summary-sub" id="statTopCategorySub">₹0.00 this month</div>
             </div>
