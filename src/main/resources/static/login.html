@@ -59,144 +59,158 @@
             <div class="auth-header">
                 <span class="auth-badge" id="authBadge">Account Access</span>
                 
-                <!-- Segmented Pill Switcher -->
+                <!-- Segmented Pill Switcher with Smooth Sliding Indicator -->
                 <div class="auth-tabs" role="tablist" aria-label="Account Action">
+                    <div class="auth-tab-indicator" id="tabIndicator"></div>
                     <button type="button" class="auth-tab active" id="tabSignIn" role="tab" aria-selected="true">Sign In</button>
                     <button type="button" class="auth-tab" id="tabCreateAccount" role="tab" aria-selected="false">Create Account</button>
                 </div>
 
-                <h2 class="auth-title" id="authHeading">Welcome back</h2>
-                <p class="auth-subtitle" id="authSubtitle">Enter your credentials to access your dashboard.</p>
+                <div class="auth-title-container" id="titleContainer">
+                    <h2 class="auth-title" id="authHeading">Welcome back</h2>
+                    <p class="auth-subtitle" id="authSubtitle">Enter your credentials to access your dashboard.</p>
+                </div>
             </div>
 
             <!-- Alert Notification -->
             <div class="auth-alert hidden" id="authAlert" role="alert"></div>
 
-            <!-- Form 1: Sign In -->
-            <form id="signInForm" class="auth-form" novalidate>
-                <div class="form-group">
-                    <label for="loginUsername">Username</label>
-                    <div class="input-with-icon">
-                        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <input type="text" id="loginUsername" class="form-control" placeholder="Enter username" required autocomplete="username" autofocus>
+            <!-- Smooth Slider Viewport -->
+            <div class="auth-slider-viewport" id="sliderViewport">
+                <div class="auth-slider-track" id="sliderTrack">
+
+                    <!-- Slide 1: Sign In -->
+                    <div class="auth-slide slide-active" id="slideSignIn">
+                        <form id="signInForm" class="auth-form" novalidate>
+                            <div class="form-group">
+                                <label for="loginUsername">Username</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <input type="text" id="loginUsername" class="form-control" placeholder="Enter username" required autocomplete="username" autofocus>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="loginPassword">Password</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                                    <button type="button" class="btn-toggle-password" id="toggleLoginPasswordBtn" title="Show password" aria-label="Toggle password visibility">
+                                        <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSignInSubmit">
+                                <span>Sign In to Dashboard</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+
+                            <div class="auth-switch-box">
+                                <span>Don't have an account?</span>
+                                <button type="button" class="auth-switch-btn" id="linkToCreate">Create an account &rarr;</button>
+                            </div>
+                        </form>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <div class="input-with-icon">
-                        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
-                        <button type="button" class="btn-toggle-password" id="toggleLoginPasswordBtn" title="Show password" aria-label="Toggle password visibility">
-                            <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                        </button>
+                    <!-- Slide 2: Create Account -->
+                    <div class="auth-slide slide-inactive" id="slideCreateAccount">
+                        <form id="createAccountForm" class="auth-form" novalidate>
+                            <div class="form-group">
+                                <label for="regFullName">Full Name</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <input type="text" id="regFullName" class="form-control" placeholder="e.g. Anil Soni" required autocomplete="name">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="regUsername">Choose Username</label>
+                                <div class="input-with-icon">
+                                    <span class="input-prefix">@</span>
+                                    <input type="text" id="regUsername" class="form-control input-has-prefix" placeholder="username" required autocomplete="username">
+                                </div>
+                                <small class="form-hint">At least 3 characters (letters, numbers, underscores).</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="regPassword">Password</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <input type="password" id="regPassword" class="form-control" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+                                    <button type="button" class="btn-toggle-password" id="toggleRegPasswordBtn" title="Show password" aria-label="Toggle password visibility">
+                                        <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="regConfirmPassword">Confirm Password</label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                    <input type="password" id="regConfirmPassword" class="form-control" placeholder="Re-enter password" required autocomplete="new-password">
+                                    <button type="button" class="btn-toggle-password" id="toggleRegConfirmPasswordBtn" title="Show password" aria-label="Toggle password visibility">
+                                        <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnRegisterSubmit">
+                                <span>Create Account & Continue</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+
+                            <div class="auth-switch-box">
+                                <span>Already have an account?</span>
+                                <button type="button" class="auth-switch-btn" id="linkToSignIn">Sign in here &rarr;</button>
+                            </div>
+                        </form>
                     </div>
+
                 </div>
-
-                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnSignInSubmit">
-                    <span>Sign In to Dashboard</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </button>
-
-                <div class="auth-switch-box">
-                    <span>Don't have an account?</span>
-                    <button type="button" class="auth-switch-btn" id="linkToCreate">Create an account &rarr;</button>
-                </div>
-            </form>
-
-            <!-- Form 2: Create Account -->
-            <form id="createAccountForm" class="auth-form hidden" novalidate>
-                <div class="form-group">
-                    <label for="regFullName">Full Name</label>
-                    <div class="input-with-icon">
-                        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <input type="text" id="regFullName" class="form-control" placeholder="e.g. Anil Soni" required autocomplete="name">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="regUsername">Choose Username</label>
-                    <div class="input-with-icon">
-                        <span class="input-prefix">@</span>
-                        <input type="text" id="regUsername" class="form-control input-has-prefix" placeholder="username" required autocomplete="username">
-                    </div>
-                    <small class="form-hint">At least 3 characters (letters, numbers, underscores).</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="regPassword">Password</label>
-                    <div class="input-with-icon">
-                        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                        <input type="password" id="regPassword" class="form-control" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
-                        <button type="button" class="btn-toggle-password" id="toggleRegPasswordBtn" title="Show password" aria-label="Toggle password visibility">
-                            <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="regConfirmPassword">Confirm Password</label>
-                    <div class="input-with-icon">
-                        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        <input type="password" id="regConfirmPassword" class="form-control" placeholder="Re-enter password" required autocomplete="new-password">
-                        <button type="button" class="btn-toggle-password" id="toggleRegConfirmPasswordBtn" title="Show password" aria-label="Toggle password visibility">
-                            <svg class="eye-show" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                            <svg class="eye-hide hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnRegisterSubmit">
-                    <span>Create Account & Continue</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </button>
-
-                <div class="auth-switch-box">
-                    <span>Already have an account?</span>
-                    <button type="button" class="auth-switch-btn" id="linkToSignIn">Sign in here &rarr;</button>
-                </div>
-            </form>
+            </div>
         </div>
     </main>
 
@@ -232,6 +246,12 @@
         // Elements
         const tabSignIn = document.getElementById('tabSignIn');
         const tabCreateAccount = document.getElementById('tabCreateAccount');
+        const tabIndicator = document.getElementById('tabIndicator');
+        const titleContainer = document.getElementById('titleContainer');
+        const sliderViewport = document.getElementById('sliderViewport');
+        const sliderTrack = document.getElementById('sliderTrack');
+        const slideSignIn = document.getElementById('slideSignIn');
+        const slideCreateAccount = document.getElementById('slideCreateAccount');
         const signInForm = document.getElementById('signInForm');
         const createAccountForm = document.getElementById('createAccountForm');
         const authHeading = document.getElementById('authHeading');
@@ -239,46 +259,92 @@
         const authBadge = document.getElementById('authBadge');
         const authAlert = document.getElementById('authAlert');
 
+        let currentTab = 'signIn';
+
         function showAlert(msg, isSuccess = false) {
             authAlert.textContent = msg;
             authAlert.className = 'auth-alert ' + (isSuccess ? 'auth-alert-success' : 'auth-alert-error');
             authAlert.classList.remove('hidden');
+            updateViewportHeight();
         }
         function hideAlert() {
             authAlert.classList.add('hidden');
             authAlert.textContent = '';
+            updateViewportHeight();
         }
 
-        // Switch Tab Functionality (Within the same card)
+        function updateViewportHeight() {
+            const activeSlide = currentTab === 'signIn' ? slideSignIn : slideCreateAccount;
+            if (activeSlide && sliderViewport) {
+                // Ensure proper height calculation
+                sliderViewport.style.height = activeSlide.offsetHeight + 'px';
+            }
+        }
+
+        // Switch Tab Functionality (Smooth slider transition)
         function switchToSignIn() {
+            if (currentTab === 'signIn') return;
+            currentTab = 'signIn';
+
+            tabIndicator.style.transform = 'translateX(0%)';
             tabSignIn.classList.add('active');
             tabSignIn.setAttribute('aria-selected', 'true');
             tabCreateAccount.classList.remove('active');
             tabCreateAccount.setAttribute('aria-selected', 'false');
 
-            signInForm.classList.remove('hidden');
-            createAccountForm.classList.add('hidden');
+            sliderTrack.style.transform = 'translateX(0%)';
+            slideSignIn.classList.remove('slide-inactive');
+            slideSignIn.classList.add('slide-active');
+            slideCreateAccount.classList.remove('slide-active');
+            slideCreateAccount.classList.add('slide-inactive');
 
-            authBadge.textContent = 'Sign In';
-            authHeading.textContent = 'Welcome back';
-            authSubtitle.textContent = 'Enter your credentials to access your dashboard.';
+            updateViewportHeight();
+
+            // Smooth subtle title cross-fade
+            titleContainer.style.opacity = '0';
+            titleContainer.style.transform = 'translateY(-3px)';
+            setTimeout(() => {
+                authBadge.textContent = 'Account Access';
+                authHeading.textContent = 'Welcome back';
+                authSubtitle.textContent = 'Enter your credentials to access your dashboard.';
+                titleContainer.style.opacity = '1';
+                titleContainer.style.transform = 'translateY(0)';
+            }, 140);
+
             hideAlert();
             document.getElementById('loginUsername').focus();
             if (history.replaceState) history.replaceState(null, '', '/login.html');
         }
 
         function switchToCreateAccount() {
+            if (currentTab === 'create') return;
+            currentTab = 'create';
+
+            tabIndicator.style.transform = 'translateX(100%)';
             tabCreateAccount.classList.add('active');
             tabCreateAccount.setAttribute('aria-selected', 'true');
             tabSignIn.classList.remove('active');
             tabSignIn.setAttribute('aria-selected', 'false');
 
-            createAccountForm.classList.remove('hidden');
-            signInForm.classList.add('hidden');
+            sliderTrack.style.transform = 'translateX(-50%)';
+            slideCreateAccount.classList.remove('slide-inactive');
+            slideCreateAccount.classList.add('slide-active');
+            slideSignIn.classList.remove('slide-active');
+            slideSignIn.classList.add('slide-inactive');
 
-            authBadge.textContent = 'Create Account';
-            authHeading.textContent = 'Create your account';
-            authSubtitle.textContent = 'Start tracking your personal expenses privately.';
+            updateViewportHeight();
+
+            // Smooth subtle title cross-fade
+            titleContainer.style.opacity = '0';
+            titleContainer.style.transform = 'translateY(-3px)';
+            setTimeout(() => {
+                authBadge.textContent = 'Create Account';
+                authHeading.textContent = 'Create your account';
+                authSubtitle.textContent = 'Start tracking your personal expenses privately.';
+                titleContainer.style.opacity = '1';
+                titleContainer.style.transform = 'translateY(0)';
+            }, 140);
+
             hideAlert();
             document.getElementById('regFullName').focus();
             if (history.replaceState) history.replaceState(null, '', '/login.html#register');
@@ -289,10 +355,15 @@
         document.getElementById('linkToCreate').addEventListener('click', switchToCreateAccount);
         document.getElementById('linkToSignIn').addEventListener('click', switchToSignIn);
 
-        // Check if arrived via #register or ?tab=register
-        if (window.location.hash === '#register' || window.location.search.includes('tab=register')) {
-            switchToCreateAccount();
-        }
+        // Initialize viewport height after fonts and assets load
+        window.addEventListener('load', () => {
+            updateViewportHeight();
+            if (window.location.hash === '#register' || window.location.search.includes('tab=register')) {
+                switchToCreateAccount();
+            }
+        });
+        window.addEventListener('resize', updateViewportHeight);
+        setTimeout(updateViewportHeight, 100);
 
         // Single Eye Password Toggle Helper (strictly 1 eye visible)
         function setupPasswordToggle(btnId, inputId) {

@@ -1,29 +1,29 @@
 /* SpendWise — Modern Light / Dark Mode with 60-30-10 Palette Rule */
 
 :root, [data-theme="light"] {
-    /* 60% Canvas / Background */
-    --bg-page: #F8FAFC;
+    /* 60% Canvas / Background - Softer, warm-cool slate tone instead of harsh white */
+    --bg-page: #EEF2F6;
     --bg-surface: #FFFFFF;
-    --bg-subtle: #F1F5F9;
-    --table-th-bg: #FFFFFF;
-    --table-hover: #F8FAFC;
+    --bg-subtle: #E2E8F0;
+    --table-th-bg: #E9EEF4;
+    --table-hover: #E2EAF2;
     --input-bg: #FFFFFF;
-    --modal-backdrop: rgba(15, 23, 42, 0.45);
+    --modal-backdrop: rgba(15, 23, 42, 0.5);
 
     /* 30% Structure & Text */
-    --border-color: #E2E8F0;
-    --border-darker: #CBD5E1;
+    --border-color: #CBD5E1;
+    --border-darker: #94A3B8;
     --text-primary: #0F172A;
     --text-secondary: #334155;
     --text-muted: #64748B;
     --structure-navy: #0F172A;
 
     /* 10% Accent: Electric Lime Green */
-    --accent: #A3E635;
-    --accent-hover: #84CC16;
+    --accent: #84CC16;
+    --accent-hover: #65A30D;
     --accent-text: #0F172A;
-    --accent-focus: rgba(163, 230, 53, 0.4);
-    --accent-glow: rgba(163, 230, 53, 0.2);
+    --accent-focus: rgba(132, 204, 22, 0.4);
+    --accent-glow: rgba(132, 204, 22, 0.25);
 
     /* Actions */
     --danger: #DC2626;
@@ -37,10 +37,10 @@
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
     /* Chart colors */
-    --chart-grid: #F1F5F9;
+    --chart-grid: #E2E8F0;
     --chart-tick: #64748B;
     --chart-bar: #0F172A;
-    --chart-bar-hover: #A3E635;
+    --chart-bar-hover: #84CC16;
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
 }
 
@@ -1136,9 +1136,9 @@ select.form-control {
 
 /* Unified Segmented Pill Tab Switcher */
 .auth-tabs {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px;
     background-color: var(--bg-subtle);
     padding: 4px;
     border-radius: 10px;
@@ -1146,7 +1146,26 @@ select.form-control {
     border: 1px solid var(--border-color);
 }
 
+.auth-tab-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    background-color: var(--accent);
+    border-radius: 7px;
+    z-index: 1;
+    transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 2px 8px rgba(132, 204, 22, 0.3);
+}
+
+[data-theme="dark"] .auth-tab-indicator {
+    box-shadow: 0 2px 10px rgba(163, 230, 53, 0.4);
+}
+
 .auth-tab {
+    position: relative;
+    z-index: 2;
     background: transparent;
     border: none;
     color: var(--text-muted);
@@ -1155,7 +1174,7 @@ select.form-control {
     padding: 9px 12px;
     border-radius: 7px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.25s ease;
 }
 
 .auth-tab:hover {
@@ -1163,10 +1182,12 @@ select.form-control {
 }
 
 .auth-tab.active {
-    background-color: var(--accent);
-    color: #0F172A;
+    color: #0F172A !important;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(163, 230, 53, 0.35);
+}
+
+.auth-title-container {
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .auth-title {
@@ -1183,14 +1204,44 @@ select.form-control {
     line-height: 1.4;
 }
 
+/* Forms Viewport & Smooth Slider Track */
+.auth-slider-viewport {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    transition: height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.auth-slider-track {
+    display: flex;
+    width: 200%;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.auth-slide {
+    width: 50%;
+    flex-shrink: 0;
+    padding: 2px 4px 6px;
+    transition: opacity 0.28s ease;
+}
+
+.auth-slide.slide-inactive {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.auth-slide.slide-active {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
-
-.auth-form.hidden {
-    display: none !important;
 }
 
 .btn-block {
