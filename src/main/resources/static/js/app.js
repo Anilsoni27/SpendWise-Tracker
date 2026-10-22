@@ -531,7 +531,7 @@
             // Display in expense's own currency, and if different from viewing currency, show equivalent
             const ownCurrencyDisplay = formatCurrency(exp.amount, expCur);
             const conversionSubtext = (expCur !== targetCur)
-                ? `<div style="font-size: 0.72rem; color: var(--text-muted);">≈ ${formatCurrency(convertedVal, targetCur)}</div>`
+                ? `<div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">≈ ${formatCurrency(convertedVal, targetCur)}</div>`
                 : '';
 
             tr.innerHTML = `
