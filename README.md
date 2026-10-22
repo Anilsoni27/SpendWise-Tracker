@@ -145,18 +145,20 @@ docker build -t spendwise:1.0 .
 docker run -p 8080:8080 spendwise:1.0
 ```
 
-### Option 2: Deploy to Render / Railway / Fly.io
+### Option 2: Deploy to Render (Recommended)
+
 1. Push this repository to GitHub.
-2. Link your repository in **Render** or **Railway**.
-3. Choose **Dockerfile** or Java Maven environment.
-4. Set build command: `./mvnw clean package -DskipTests` and start command: `java -jar target/spendwise-1.0.0.jar`.
-5. *(Optional)* For production PostgreSQL, set:
-   ```properties
-   SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:<port>/<dbname>
-   SPRING_DATASOURCE_USERNAME=<user>
-   SPRING_DATASOURCE_PASSWORD=<password>
-   SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-   ```
+2. In your [Render Dashboard](https://dashboard.render.com/), click **New +** > **Web Service**.
+3. Connect your GitHub repository `SpendWise-Tracker`.
+4. **Runtime**: Select **Docker** (Recommended — Render will automatically build using the existing multi-stage `Dockerfile`, which activates `SPRING_PROFILES_ACTIVE=prod`).
+5. **Environment Variables**: Add the following required PostgreSQL connection variables under the **Environment** tab:
+   - `SPRING_DATASOURCE_URL` — e.g. `jdbc:postgresql://<host>:5432/<dbname>`
+     > **Note for Neon / Supabase**: Append `?sslmode=require` to the JDBC URL if SSL is enforced:  
+     > `jdbc:postgresql://<host>:5432/<dbname>?sslmode=require`
+   - `SPRING_DATASOURCE_USERNAME` — Your PostgreSQL database username
+   - `SPRING_DATASOURCE_PASSWORD` — Your PostgreSQL database password
+6. Click **Deploy Web Service**.
+   > **Note on Free Instances**: Render free instances automatically spin down (sleep) after periods of inactivity. The first request after a period of inactivity may take 30–50 seconds while the container boots up.
 
 ---
 
