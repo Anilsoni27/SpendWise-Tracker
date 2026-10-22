@@ -15,7 +15,7 @@
             } catch(e) {}
         })();
     </script>
-    <link rel="stylesheet" href="/css/styles.css?v=3.6.0">
+    <link rel="stylesheet" href="/css/styles.css?v=3.7.0">
 </head>
 <body class="auth-page">
     <!-- Top Navigation -->
@@ -75,8 +75,8 @@
             <!-- Alert Notification -->
             <div class="auth-alert hidden" id="authAlert" role="alert"></div>
 
-            <!-- Form Container -->
-            <div class="auth-form-container">
+            <!-- Fluid Forms Viewport -->
+            <div class="auth-viewport" id="authViewport">
                 <!-- Sign In Form -->
                 <form id="signInForm" class="auth-form form-active" novalidate>
                     <div class="form-group">
@@ -126,7 +126,7 @@
                 </form>
 
                 <!-- Create Account Form -->
-                <form id="createAccountForm" class="auth-form form-inactive hidden" novalidate>
+                <form id="createAccountForm" class="auth-form form-inactive slide-right is-settled" novalidate>
                     <div class="form-group">
                         <label for="regFullName">Full Name</label>
                         <div class="input-with-icon">
@@ -240,6 +240,7 @@
         const tabCreateAccount = document.getElementById('tabCreateAccount');
         const tabIndicator = document.getElementById('tabIndicator');
         const titleContainer = document.getElementById('titleContainer');
+        const authViewport = document.getElementById('authViewport');
         const signInForm = document.getElementById('signInForm');
         const createAccountForm = document.getElementById('createAccountForm');
         const authHeading = document.getElementById('authHeading');
@@ -248,6 +249,7 @@
         const authAlert = document.getElementById('authAlert');
 
         let currentTab = 'signIn';
+        let transitionTimer = null;
 
         function showAlert(msg, isSuccess = false) {
             authAlert.textContent = msg;
@@ -259,74 +261,111 @@
             authAlert.textContent = '';
         }
 
-        // Switch Tab Functionality
-        function switchToSignIn() {
-            if (currentTab === 'signIn') return;
-            currentTab = 'signIn';
+        // Buttery Smooth Unified Tab Switcher
+        function switchTab(newTab) {
+            if (currentTab === newTab) return;
+            const isGoingToCreate = (newTab === 'create');
+            currentTab = newTab;
 
-            tabIndicator.style.transform = 'translateX(0%)';
-            tabSignIn.classList.add('active');
-            tabSignIn.setAttribute('aria-selected', 'true');
-            tabCreateAccount.classList.remove('active');
-            tabCreateAccount.setAttribute('aria-selected', 'false');
+            const outgoingForm = isGoingToCreate ? signInForm : createAccountForm;
+            const incomingForm = isGoingToCreate ? createAccountForm : signInForm;
 
-            signInForm.classList.remove('hidden', 'form-inactive');
-            signInForm.classList.add('form-active');
-            createAccountForm.classList.add('hidden', 'form-inactive');
-            createAccountForm.classList.remove('form-active');
+            if (transitionTimer) {
+                clearTimeout(transitionTimer);
+                transitionTimer = null;
+            }
 
-            // Smooth subtle title cross-fade
+            // 1. Move pill indicator with smooth sliding animation
+            tabIndicator.style.transform = isGoingToCreate ? 'translateX(100%)' : 'translateX(0%)';
+            tabCreateAccount.classList.toggle('active', isGoingToCreate);
+            tabCreateAccount.setAttribute('aria-selected', isGoingToCreate ? 'true' : 'false');
+            tabSignIn.classList.toggle('active', !isGoingToCreate);
+            tabSignIn.setAttribute('aria-selected', !isGoingToCreate ? 'true' : 'false');
+
+            // 2. Prepare incoming form & measure heights for smooth viewport morphing
+            incomingForm.classList.remove('is-settled');
+            const startH = outgoingForm.offsetHeight;
+            const targetH = incomingForm.offsetHeight;
+
+            // Pin start height so transition begins from current visual position
+            authViewport.style.height = startH + 'px';
+            void authViewport.offsetHeight; // Force reflow
+
+            // Smoothly morph to target height
+            authViewport.style.height = targetH + 'px';
+
+            // 3. Directional slide + fade for forms
+            if (isGoingToCreate) {
+                outgoingForm.className = 'auth-form form-inactive slide-left';
+                incomingForm.className = 'auth-form form-active';
+            } else {
+                outgoingForm.className = 'auth-form form-inactive slide-right';
+                incomingForm.className = 'auth-form form-active';
+            }
+
+            // 4. Subtle text cross-fade
             titleContainer.style.opacity = '0';
+            titleContainer.style.transform = 'translateY(-2px)';
             setTimeout(() => {
-                authBadge.textContent = 'Account Access';
-                authHeading.textContent = 'Welcome back';
-                authSubtitle.textContent = 'Enter your credentials to access your dashboard.';
+                if (isGoingToCreate) {
+                    authBadge.textContent = 'Create Account';
+                    authHeading.textContent = 'Create your account';
+                    authSubtitle.textContent = 'Start tracking your personal expenses privately.';
+                } else {
+                    authBadge.textContent = 'Account Access';
+                    authHeading.textContent = 'Welcome back';
+                    authSubtitle.textContent = 'Enter your credentials to access your dashboard.';
+                }
                 titleContainer.style.opacity = '1';
+                titleContainer.style.transform = 'translateY(0)';
             }, 120);
 
+            // 5. Release fixed height back to natural 'auto' when transition completes
+            transitionTimer = setTimeout(() => {
+                authViewport.style.height = 'auto';
+                outgoingForm.classList.add('is-settled');
+                transitionTimer = null;
+            }, 350);
+
             hideAlert();
-            document.getElementById('loginUsername').focus();
-            if (history.replaceState) history.replaceState(null, '', '/login.html');
-        }
 
-        function switchToCreateAccount() {
-            if (currentTab === 'create') return;
-            currentTab = 'create';
-
-            tabIndicator.style.transform = 'translateX(100%)';
-            tabCreateAccount.classList.add('active');
-            tabCreateAccount.setAttribute('aria-selected', 'true');
-            tabSignIn.classList.remove('active');
-            tabSignIn.setAttribute('aria-selected', 'false');
-
-            createAccountForm.classList.remove('hidden', 'form-inactive');
-            createAccountForm.classList.add('form-active');
-            signInForm.classList.add('hidden', 'form-inactive');
-            signInForm.classList.remove('form-active');
-
-            // Smooth subtle title cross-fade
-            titleContainer.style.opacity = '0';
             setTimeout(() => {
-                authBadge.textContent = 'Create Account';
-                authHeading.textContent = 'Create your account';
-                authSubtitle.textContent = 'Start tracking your personal expenses privately.';
-                titleContainer.style.opacity = '1';
-            }, 120);
-
-            hideAlert();
-            document.getElementById('regFullName').focus();
-            if (history.replaceState) history.replaceState(null, '', '/login.html#register');
+                if (isGoingToCreate) {
+                    document.getElementById('regFullName').focus();
+                    if (history.replaceState) history.replaceState(null, '', '/login.html#register');
+                } else {
+                    document.getElementById('loginUsername').focus();
+                    if (history.replaceState) history.replaceState(null, '', '/login.html');
+                }
+            }, 180);
         }
 
-        tabSignIn.addEventListener('click', switchToSignIn);
-        tabCreateAccount.addEventListener('click', switchToCreateAccount);
-        document.getElementById('linkToCreate').addEventListener('click', switchToCreateAccount);
-        document.getElementById('linkToSignIn').addEventListener('click', switchToSignIn);
+        tabSignIn.addEventListener('click', () => switchTab('signIn'));
+        tabCreateAccount.addEventListener('click', () => switchTab('create'));
+        document.getElementById('linkToCreate').addEventListener('click', () => switchTab('create'));
+        document.getElementById('linkToSignIn').addEventListener('click', () => switchTab('signIn'));
 
         // Check URL hash or query param on load
         window.addEventListener('load', () => {
             if (window.location.hash === '#register' || window.location.search.includes('tab=register')) {
-                switchToCreateAccount();
+                currentTab = 'create';
+                tabIndicator.style.transition = 'none';
+                tabIndicator.style.transform = 'translateX(100%)';
+                tabCreateAccount.classList.add('active');
+                tabCreateAccount.setAttribute('aria-selected', 'true');
+                tabSignIn.classList.remove('active');
+                tabSignIn.setAttribute('aria-selected', 'false');
+
+                signInForm.className = 'auth-form form-inactive slide-left is-settled';
+                createAccountForm.className = 'auth-form form-active';
+
+                authBadge.textContent = 'Create Account';
+                authHeading.textContent = 'Create your account';
+                authSubtitle.textContent = 'Start tracking your personal expenses privately.';
+
+                requestAnimationFrame(() => {
+                    tabIndicator.style.transition = '';
+                });
             }
         });
 
