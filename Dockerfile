@@ -6,6 +6,7 @@ WORKDIR /workspace
 # Copy maven wrapper and pom.xml
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
+RUN chmod +x ./mvnw
 
 # Download dependencies (cached layer)
 RUN ./mvnw dependency:go-offline -B
