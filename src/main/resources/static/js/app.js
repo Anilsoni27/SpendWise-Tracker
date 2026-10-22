@@ -1030,4 +1030,19 @@
         }, 3000);
     }
 
+    // Subtle ambient spotlight cursor tracking (60fps passive requestAnimationFrame)
+    (function initAmbientSpotlight() {
+        let ticking = false;
+        window.addEventListener('mousemove', (e) => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    document.documentElement.style.setProperty('--mouse-x', e.clientX + 'px');
+                    document.documentElement.style.setProperty('--mouse-y', e.clientY + 'px');
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }, { passive: true });
+    })();
+
 })();

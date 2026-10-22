@@ -15,11 +15,20 @@
             } catch(e) {}
         })();
     </script>
-    <link rel="stylesheet" href="/css/styles.css?v=3.7.0">
+    <link rel="stylesheet" href="/css/styles.css?v=3.8.0">
     <!-- Chart.js for simple, clean charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
+    <!-- Ambient Living Dynamic Background (Tech grid, moving aura orbs & cursor spotlight) -->
+    <div class="ambient-background" aria-hidden="true">
+        <div class="ambient-grid"></div>
+        <div class="ambient-glow ambient-glow-1"></div>
+        <div class="ambient-glow ambient-glow-2"></div>
+        <div class="ambient-glow ambient-glow-3"></div>
+        <div class="ambient-spotlight"></div>
+    </div>
+
     <header class="topbar">
         <div class="container topbar-content">
             <div class="brand">
@@ -385,6 +394,6 @@
     <!-- Simple Toast Notification Container -->
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-    <script src="/js/app.js?v=3.2.0"></script>
+    <script src="/js/app.js?v=3.8.0"></script>
 </body>
 </html>

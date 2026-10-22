@@ -15,9 +15,18 @@
             } catch(e) {}
         })();
     </script>
-    <link rel="stylesheet" href="/css/styles.css?v=3.7.0">
+    <link rel="stylesheet" href="/css/styles.css?v=3.8.0">
 </head>
 <body class="auth-page">
+    <!-- Ambient Living Dynamic Background (Tech grid, moving aura orbs & cursor spotlight) -->
+    <div class="ambient-background" aria-hidden="true">
+        <div class="ambient-grid"></div>
+        <div class="ambient-glow ambient-glow-1"></div>
+        <div class="ambient-glow ambient-glow-2"></div>
+        <div class="ambient-glow ambient-glow-3"></div>
+        <div class="ambient-spotlight"></div>
+    </div>
+
     <!-- Top Navigation -->
     <header class="auth-top-nav">
         <a href="/" class="brand-link" aria-label="SpendWise Home">
@@ -234,6 +243,21 @@
             initTheme();
         });
         initTheme();
+
+        // Subtle ambient spotlight cursor tracking (60fps passive requestAnimationFrame)
+        (function initAmbientSpotlight() {
+            let ticking = false;
+            window.addEventListener('mousemove', (e) => {
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        document.documentElement.style.setProperty('--mouse-x', e.clientX + 'px');
+                        document.documentElement.style.setProperty('--mouse-y', e.clientY + 'px');
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+        })();
 
         // Elements
         const tabSignIn = document.getElementById('tabSignIn');

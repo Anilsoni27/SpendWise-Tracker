@@ -3,7 +3,8 @@
 :root, [data-theme="light"] {
     /* 60% Canvas / Background - Softer, warm-cool slate tone instead of harsh white */
     --bg-page: #EEF2F6;
-    --bg-surface: #FFFFFF;
+    --bg-surface: rgba(255, 255, 255, 0.92);
+    --bg-surface-solid: #FFFFFF;
     --bg-subtle: #E2E8F0;
     --table-th-bg: #E9EEF4;
     --table-hover: #E2EAF2;
@@ -45,31 +46,32 @@
 }
 
 [data-theme="dark"] {
-    /* 60% Canvas / Deep Dark Midnight Background */
-    --bg-page: #0B0F19;
+    /* 60% Canvas / Deep Oceanic Midnight Navy Background (Infused with rich sapphire & navy blue - Not Flat Black!) */
+    --bg-page: #0A0E1A;
     
-    /* 30% Cards, Containers & Structure - Rich Slate Navy (Not Pitch Black!) */
-    --bg-surface: #1E293B;            /* Clean, modern slate-navy card background */
-    --bg-subtle: #162032;             /* Subtle nested background for filters & footer */
-    --table-th-bg: #1E293B;
-    --table-hover: #26354A;           /* Distinct interactive hover */
-    --input-bg: #131B2A;              /* Input background with nice contrast */
-    --modal-backdrop: rgba(11, 15, 25, 0.75);
+    /* 30% Cards, Containers & Structure - Rich Slate Navy Glass */
+    --bg-surface: rgba(18, 26, 45, 0.88);       /* Clean, modern slate-navy with colored undertone */
+    --bg-surface-solid: #121A2D;                /* Solid fallback when transparency isn't needed */
+    --bg-subtle: #0E1524;                       /* Subtle nested background for filters & footer */
+    --table-th-bg: #11192C;
+    --table-hover: #19253F;                      /* Distinct interactive hover */
+    --input-bg: #0B111E;                        /* Input background with nice contrast */
+    --modal-backdrop: rgba(6, 9, 17, 0.78);
 
-    /* Borders & Structure */
-    --border-color: #334155;          /* Crisp slate border providing sharp box definition */
-    --border-darker: #475569;
-    --text-primary: #F8FAFC;
+    /* Borders & Structure - Colored Slate/Indigo Tint */
+    --border-color: #22304A;                     /* Crisp slate-navy border */
+    --border-darker: #2E4062;
+    --text-primary: #F1F5F9;                     /* Clean cool ice-white */
     --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
-    --structure-navy: #1E293B;
+    --text-muted: #8493A8;
+    --structure-navy: #121A2D;
 
-    /* 10% Accent: Electric Lime Green (Glows on Dark Mode!) */
+    /* 10% Accent: Electric Lime Green (Glows on Dark Navy!) */
     --accent: #A3E635;
     --accent-hover: #BEF264;
-    --accent-text: #0F172A;
+    --accent-text: #0A0E1A;
     --accent-focus: rgba(163, 230, 53, 0.45);
-    --accent-glow: rgba(163, 230, 53, 0.3);
+    --accent-glow: rgba(163, 230, 53, 0.28);
 
     /* Actions */
     --danger: #EF4444;
@@ -77,8 +79,8 @@
     --danger-bg: rgba(239, 68, 68, 0.18);
 
     /* Chart colors */
-    --chart-grid: #334155;
-    --chart-tick: #94A3B8;
+    --chart-grid: #1F2D44;
+    --chart-tick: #8493A8;
     --chart-bar: #A3E635;
     --chart-bar-hover: #BEF264;
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23cbd5e1' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
@@ -102,7 +104,159 @@ body {
     color: var(--text-primary);
     line-height: 1.5;
     min-height: 100vh;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    position: relative;
+    overflow-x: hidden;
+}
+
+[data-theme="dark"] body {
+    background: radial-gradient(circle at 50% -10%, #111C38 0%, #0A0E1C 55%, #060913 100%);
+    background-attachment: fixed;
+}
+
+[data-theme="light"] body {
+    background: radial-gradient(circle at 50% -10%, #F1F5F9 0%, #EEF2F6 60%, #E6EBF2 100%);
+    background-attachment: fixed;
+}
+
+/* ==========================================================================
+   Ambient Living Dynamic Background (Tech grid, moving aura orbs & spotlight)
+   ========================================================================== */
+.ambient-background {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* Subtle modern tech dot-matrix grid */
+.ambient-grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.13) 1.1px, transparent 1.1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 35%, transparent 95%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 35%, transparent 95%);
+    opacity: 0.75;
+}
+
+[data-theme="dark"] .ambient-grid {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.08) 1.2px, transparent 1.2px);
+    opacity: 0.85;
+}
+
+/* Floating Ambient Glowing Orbs */
+.ambient-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    will-change: transform, opacity;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .ambient-glow {
+    mix-blend-mode: screen;
+}
+
+[data-theme="light"] .ambient-glow {
+    mix-blend-mode: multiply;
+}
+
+/* Orb 1: Lime-Emerald living aura */
+.ambient-glow-1 {
+    width: 540px;
+    height: 540px;
+    top: -120px;
+    left: 12%;
+    background: radial-gradient(circle, rgba(163, 230, 53, 0.17) 0%, rgba(132, 204, 22, 0.05) 55%, transparent 75%);
+    animation: floatAmbientGlow1 24s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+[data-theme="light"] .ambient-glow-1 {
+    background: radial-gradient(circle, rgba(132, 204, 22, 0.11) 0%, rgba(163, 230, 53, 0.03) 55%, transparent 75%);
+}
+
+/* Orb 2: Deep Cyan / Sapphire living aura */
+.ambient-glow-2 {
+    width: 640px;
+    height: 640px;
+    bottom: -160px;
+    right: 8%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(99, 102, 241, 0.07) 50%, transparent 75%);
+    animation: floatAmbientGlow2 28s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+[data-theme="light"] .ambient-glow-2 {
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.09) 0%, rgba(129, 140, 248, 0.03) 50%, transparent 75%);
+}
+
+/* Orb 3: Violet / Soft Teal breathing aura */
+.ambient-glow-3 {
+    width: 440px;
+    height: 440px;
+    top: 35%;
+    left: 45%;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.11) 0%, rgba(20, 184, 166, 0.05) 50%, transparent 75%);
+    animation: floatAmbientGlow3 20s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+[data-theme="light"] .ambient-glow-3 {
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, rgba(20, 184, 166, 0.02) 50%, transparent 75%);
+}
+
+/* Ambient cursor spotlight tracking */
+.ambient-spotlight {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(700px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), rgba(163, 230, 53, 0.06), transparent 60%);
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="light"] .ambient-spotlight {
+    background: radial-gradient(700px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), rgba(132, 204, 22, 0.04), transparent 60%);
+}
+
+@keyframes floatAmbientGlow1 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+        transform: translate3d(85px, 65px, 0) scale(1.12);
+    }
+    100% {
+        transform: translate3d(-45px, 125px, 0) scale(0.95);
+    }
+}
+
+@keyframes floatAmbientGlow2 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+        transform: translate3d(-95px, -75px, 0) scale(1.15);
+    }
+    100% {
+        transform: translate3d(55px, -115px, 0) scale(0.93);
+    }
+}
+
+@keyframes floatAmbientGlow3 {
+    0% {
+        transform: translate3d(0, 0, 0) scale(0.95);
+        opacity: 0.6;
+    }
+    50% {
+        transform: translate3d(-65px, 85px, 0) scale(1.12);
+        opacity: 0.95;
+    }
+    100% {
+        transform: translate3d(75px, -55px, 0) scale(1.02);
+        opacity: 0.65;
+    }
 }
 
 .container {
@@ -110,6 +264,8 @@ body {
     width: 95%;
     margin: 0 auto;
     padding: 0 24px;
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 768px) {
@@ -122,9 +278,14 @@ body {
 /* Header / Topbar */
 .topbar {
     background-color: var(--bg-surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border-color);
     padding: 14px 0;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .topbar-content {
@@ -395,6 +556,8 @@ body {
 
 .summary-card {
     background: var(--bg-surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 18px 20px;
@@ -409,7 +572,7 @@ body {
 [data-theme="dark"] .summary-card,
 [data-theme="dark"] .chart-card,
 [data-theme="dark"] .expenses-section {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 18px rgba(2, 6, 23, 0.4), 0 1px 3px rgba(2, 6, 23, 0.25);
 }
 
 /* Hover Effects on Cards & Boxes */
@@ -428,13 +591,13 @@ body {
 
 [data-theme="dark"] .summary-card:hover,
 [data-theme="dark"] .chart-card:hover {
-    border-color: #4A5B73;
-    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(163, 230, 53, 0.25);
+    border-color: rgba(163, 230, 53, 0.4);
+    box-shadow: 0 16px 36px -6px rgba(2, 6, 23, 0.7), 0 0 16px rgba(163, 230, 53, 0.15);
 }
 
 [data-theme="dark"] .expenses-section:hover {
-    border-color: #4A5B73;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    border-color: #2E4062;
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.55);
 }
 
 [data-theme="light"] .expenses-section:hover,
@@ -487,6 +650,8 @@ body {
 
 .chart-card {
     background: var(--bg-surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 20px;
@@ -584,6 +749,8 @@ body {
 /* Expenses Section: 30% Container */
 .expenses-section {
     background: var(--bg-surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -1108,17 +1275,21 @@ select.form-control {
 
 .auth-card {
     background-color: var(--bg-surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 30px 26px;
     width: 100%;
     max-width: 420px;
+    position: relative;
+    z-index: 10;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
     transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 [data-theme="dark"] .auth-card {
-    box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 45px -8px rgba(2, 6, 23, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .auth-header {
