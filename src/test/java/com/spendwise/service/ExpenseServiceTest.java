@@ -6,11 +6,15 @@ import com.spendwise.dto.ExpenseRequestDto;
 import com.spendwise.dto.SpendingSummaryDto;
 import com.spendwise.model.Category;
 import com.spendwise.model.Expense;
+import com.spendwise.model.User;
 import com.spendwise.repository.ExpenseRepository;
+import com.spendwise.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.StringWriter;
@@ -23,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@WithMockUser(username = "testuser")
 class ExpenseServiceTest {
 
     @Autowired
@@ -31,9 +36,19 @@ class ExpenseServiceTest {
     @Autowired
     private ExpenseRepository expenseRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    private User testUser;
+
     @BeforeEach
     void setUp() {
         expenseRepository.deleteAll();
+        userRepository.deleteAll();
+        testUser = userRepository.save(new User("testuser", "Test User", passwordEncoder.encode("secret123"), "ROLE_USER"));
     }
 
     @Test
@@ -54,18 +69,21 @@ class ExpenseServiceTest {
         assertEquals(new BigDecimal("4.50"), created.getAmount());
         assertEquals(Category.FOOD, created.getCategory());
         assertEquals("Morning latte", created.getNotes());
+        assertEquals("testuser", created.getUser().getUsername());
     }
 
     @Test
     void testUpdateExpense() {
-        Expense saved = expenseRepository.save(new Expense(
+        Expense expense = new Expense(
                 "Book",
                 new BigDecimal("20.00"),
                 Category.EDUCATION,
                 LocalDate.now(),
                 "Debit Card",
                 "Fiction"
-        ));
+        );
+        expense.setUser(testUser);
+        Expense saved = expenseRepository.save(expense);
 
         ExpenseRequestDto updateDto = new ExpenseRequestDto(
                 "Updated Book",
@@ -85,14 +103,16 @@ class ExpenseServiceTest {
 
     @Test
     void testDeleteExpense() {
-        Expense saved = expenseRepository.save(new Expense(
+        Expense expense = new Expense(
                 "Lunch",
                 new BigDecimal("15.00"),
                 Category.FOOD,
                 LocalDate.now(),
                 "Cash",
                 ""
-        ));
+        );
+        expense.setUser(testUser);
+        Expense saved = expenseRepository.save(expense);
 
         Long id = saved.getId();
         expenseService.deleteExpense(id);
@@ -101,60 +121,76 @@ class ExpenseServiceTest {
     }
 
     @Test
-    void testGetSummary() {
+    void testGetSummaryCalculation() {
         LocalDate today = LocalDate.now();
-        expenseRepository.save(new Expense("Breakfast", new BigDecimal("10.00"), Category.FOOD, today, "Cash", ""));
-        expenseRepository.save(new Expense("Lunch", new BigDecimal("15.00"), Category.FOOD, today, "Cash", ""));
-        expenseRepository.save(new Expense("Yesterday Snack", new BigDecimal("5.00"), Category.FOOD, today.minusDays(1), "Cash", ""));
+
+        Expense e1 = new Expense("Groceries", new BigDecimal("100.00"), Category.GROCERIES, today, "Card", "");
+        e1.setUser(testUser);
+        Expense e2 = new Expense("Snacks", new BigDecimal("20.00"), Category.FOOD, today, "Cash", "");
+        e2.setUser(testUser);
+        Expense e3 = new Expense("Yesterday dinner", new BigDecimal("50.00"), Category.FOOD, today.minusDays(1), "Card", "");
+        e3.setUser(testUser);
+
+        expenseRepository.saveAll(List.of(e1, e2, e3));
 
         SpendingSummaryDto summary = expenseService.getSummary(today);
 
-        assertEquals(new BigDecimal("25.00"), summary.getTodayTotal());
-        assertEquals(new BigDecimal("5.00"), summary.getYesterdayTotal());
+        assertEquals(new BigDecimal("120.00"), summary.getTodayTotal());
+        assertEquals(new BigDecimal("50.00"), summary.getYesterdayTotal());
+        assertEquals(new BigDecimal("170.00"), summary.getThisMonthTotal());
+        assertEquals(new BigDecimal("170.00"), summary.getAllTimeTotal());
         assertEquals(3, summary.getTotalCount());
-        assertEquals(new BigDecimal("30.00"), summary.getAllTimeTotal());
-        assertEquals(new BigDecimal("10.00"), summary.getAverageExpense());
     }
 
     @Test
     void testCategoryBreakdown() {
         LocalDate today = LocalDate.now();
-        expenseRepository.save(new Expense("Groceries", new BigDecimal("60.00"), Category.GROCERIES, today, "Card", ""));
-        expenseRepository.save(new Expense("Dinner", new BigDecimal("40.00"), Category.FOOD, today, "Card", ""));
+        Expense e1 = new Expense("Groceries 1", new BigDecimal("60.00"), Category.GROCERIES, today, "Card", "");
+        e1.setUser(testUser);
+        Expense e2 = new Expense("Groceries 2", new BigDecimal("40.00"), Category.GROCERIES, today, "Cash", "");
+        e2.setUser(testUser);
+        Expense e3 = new Expense("Dinner", new BigDecimal("100.00"), Category.FOOD, today, "Card", "");
+        e3.setUser(testUser);
 
-        List<CategorySummaryDto> breakdown = expenseService.getCategoryBreakdown(null, null);
+        expenseRepository.saveAll(List.of(e1, e2, e3));
 
-        assertFalse(breakdown.isEmpty());
+        List<CategorySummaryDto> breakdown = expenseService.getCategoryBreakdown(today.minusDays(5), today);
+
         assertEquals(2, breakdown.size());
-        assertEquals("Groceries", breakdown.get(0).getDisplayName());
-        assertEquals(new BigDecimal("60.00"), breakdown.get(0).getTotalAmount());
-        assertEquals(60.0, breakdown.get(0).getPercentage());
+        assertEquals("FOOD", breakdown.get(0).getCategory());
+        assertEquals(new BigDecimal("100.00"), breakdown.get(0).getTotalAmount());
+        assertEquals(50.0, breakdown.get(0).getPercentage());
     }
 
     @Test
-    void testDailySpending() {
+    void testDailySpendingChartData() {
         LocalDate today = LocalDate.now();
-        expenseRepository.save(new Expense("Dinner", new BigDecimal("35.00"), Category.FOOD, today, "Card", ""));
+        Expense e = new Expense("Taxi", new BigDecimal("35.00"), Category.TRANSPORTATION, today, "Card", "");
+        e.setUser(testUser);
+        expenseRepository.save(e);
 
         List<DailySpendingDto> daily = expenseService.getDailySpending(7);
 
         assertEquals(7, daily.size());
-        // Last element should be today
         DailySpendingDto todayDto = daily.get(daily.size() - 1);
         assertEquals(today, todayDto.getDate());
         assertEquals(new BigDecimal("35.00"), todayDto.getAmount());
+        assertEquals(1, todayDto.getCount());
     }
 
     @Test
     void testExportCsv() {
-        expenseRepository.save(new Expense("Item 1", new BigDecimal("12.50"), Category.SHOPPING, LocalDate.now(), "Card", "Sample note"));
+        LocalDate today = LocalDate.now();
+        Expense e = new Expense("Movie", new BigDecimal("15.50"), Category.ENTERTAINMENT, today, "Card", "Popcorn included");
+        e.setUser(testUser);
+        expenseRepository.save(e);
 
-        StringWriter writer = new StringWriter();
-        expenseService.exportToCsv(writer, null, null, null, null);
+        StringWriter sw = new StringWriter();
+        expenseService.exportToCsv(sw, null, null, null, null);
 
-        String csv = writer.toString();
-        assertTrue(csv.contains("ID,Date,Title,Category,Amount,Currency,Payment Method,Notes"));
-        assertTrue(csv.contains("Item 1"));
-        assertTrue(csv.contains("12.50"));
+        String csvOutput = sw.toString();
+        assertTrue(csvOutput.contains("ID,Date,Title,Category,Amount,Currency,Payment Method,Notes"));
+        assertTrue(csvOutput.contains("Movie"));
+        assertTrue(csvOutput.contains("15.50"));
     }
 }

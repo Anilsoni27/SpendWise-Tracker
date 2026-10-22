@@ -51,6 +51,11 @@ public class Expense {
     @Column(length = 255)
     private String notes;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private User user;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -173,5 +178,13 @@ public class Expense {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

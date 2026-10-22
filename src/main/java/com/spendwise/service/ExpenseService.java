@@ -7,6 +7,7 @@ import com.spendwise.dto.ExpenseRequestDto;
 import com.spendwise.dto.SpendingSummaryDto;
 import com.spendwise.model.Category;
 import com.spendwise.model.Expense;
+import com.spendwise.model.User;
 import com.spendwise.repository.ExpenseRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,22 @@ import java.util.*;
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final UserService userService;
     private static final DateTimeFormatter LABEL_FORMATTER = DateTimeFormatter.ofPattern("MMM dd");
 
-    public ExpenseService(ExpenseRepository expenseRepository) {
+    public ExpenseService(ExpenseRepository expenseRepository, UserService userService) {
         this.expenseRepository = expenseRepository;
+        this.userService = userService;
     }
 
     @Transactional(readOnly = true)
     public List<Expense> getExpenses(String search, Category category, LocalDate startDate, LocalDate endDate,
+                                    String sortBy, String sortDir) {
+        return getExpenses(userService.getCurrentAuthenticatedUser(), search, category, startDate, endDate, sortBy, sortDir);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Expense> getExpenses(User user, String search, Category category, LocalDate startDate, LocalDate endDate,
                                     String sortBy, String sortDir) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         String property = "expenseDate";
@@ -46,12 +55,12 @@ public class ExpenseService {
         }
 
         Sort sort = Sort.by(direction, property);
-        // Secondary sort by id desc for consistent ordering
         if (!"id".equalsIgnoreCase(property)) {
             sort = sort.and(Sort.by(Sort.Direction.DESC, "id"));
         }
 
         return expenseRepository.findWithFilters(
+                user,
                 (search != null && !search.trim().isEmpty()) ? search.trim() : null,
                 category,
                 startDate,
@@ -62,11 +71,20 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public Expense getExpenseById(Long id) {
-        return expenseRepository.findById(id)
+        return getExpenseById(userService.getCurrentAuthenticatedUser(), id);
+    }
+
+    @Transactional(readOnly = true)
+    public Expense getExpenseById(User user, Long id) {
+        return expenseRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new NoSuchElementException("Expense not found with id: " + id));
     }
 
     public Expense createExpense(ExpenseRequestDto dto) {
+        return createExpense(userService.getCurrentAuthenticatedUser(), dto);
+    }
+
+    public Expense createExpense(User user, ExpenseRequestDto dto) {
         Expense expense = new Expense(
                 dto.getTitle().trim(),
                 dto.getAmount(),
@@ -76,11 +94,16 @@ public class ExpenseService {
                 dto.getPaymentMethod().trim(),
                 dto.getNotes() != null ? dto.getNotes().trim() : null
         );
+        expense.setUser(user);
         return expenseRepository.save(expense);
     }
 
     public Expense updateExpense(Long id, ExpenseRequestDto dto) {
-        Expense expense = getExpenseById(id);
+        return updateExpense(userService.getCurrentAuthenticatedUser(), id, dto);
+    }
+
+    public Expense updateExpense(User user, Long id, ExpenseRequestDto dto) {
+        Expense expense = getExpenseById(user, id);
         expense.setTitle(dto.getTitle().trim());
         expense.setAmount(dto.getAmount());
         if (dto.getCurrency() != null && !dto.getCurrency().trim().isEmpty()) {
@@ -94,7 +117,11 @@ public class ExpenseService {
     }
 
     public void deleteExpense(Long id) {
-        if (!expenseRepository.existsById(id)) {
+        deleteExpense(userService.getCurrentAuthenticatedUser(), id);
+    }
+
+    public void deleteExpense(User user, Long id) {
+        if (!expenseRepository.existsByIdAndUser(id, user)) {
             throw new NoSuchElementException("Expense not found with id: " + id);
         }
         expenseRepository.deleteById(id);
@@ -102,6 +129,11 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public SpendingSummaryDto getSummary(LocalDate referenceDate) {
+        return getSummary(userService.getCurrentAuthenticatedUser(), referenceDate);
+    }
+
+    @Transactional(readOnly = true)
+    public SpendingSummaryDto getSummary(User user, LocalDate referenceDate) {
         LocalDate today = (referenceDate != null) ? referenceDate : LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
 
@@ -114,14 +146,14 @@ public class ExpenseService {
         LocalDate endOfPrevMonth = prevYearMonth.atEndOfMonth();
 
         SpendingSummaryDto summary = new SpendingSummaryDto();
-        summary.setTodayTotal(expenseRepository.sumAmountByDate(today));
-        summary.setYesterdayTotal(expenseRepository.sumAmountByDate(yesterday));
-        summary.setThisMonthTotal(expenseRepository.sumAmountBetweenDates(startOfCurrentMonth, endOfCurrentMonth));
-        summary.setLastMonthTotal(expenseRepository.sumAmountBetweenDates(startOfPrevMonth, endOfPrevMonth));
+        summary.setTodayTotal(expenseRepository.sumAmountByDate(user, today));
+        summary.setYesterdayTotal(expenseRepository.sumAmountByDate(user, yesterday));
+        summary.setThisMonthTotal(expenseRepository.sumAmountBetweenDates(user, startOfCurrentMonth, endOfCurrentMonth));
+        summary.setLastMonthTotal(expenseRepository.sumAmountBetweenDates(user, startOfPrevMonth, endOfPrevMonth));
 
-        BigDecimal allTime = expenseRepository.sumTotalAmount();
+        BigDecimal allTime = expenseRepository.sumTotalAmount(user);
         summary.setAllTimeTotal(allTime);
-        long totalCount = expenseRepository.count();
+        long totalCount = expenseRepository.countByUser(user);
         summary.setTotalCount(totalCount);
 
         if (totalCount > 0 && allTime.compareTo(BigDecimal.ZERO) > 0) {
@@ -132,15 +164,14 @@ public class ExpenseService {
         }
 
         // Top category this month
-        List<Object[]> topCats = expenseRepository.sumGroupedByCategory(startOfCurrentMonth, endOfCurrentMonth);
+        List<Object[]> topCats = expenseRepository.sumGroupedByCategory(user, startOfCurrentMonth, endOfCurrentMonth);
         if (!topCats.isEmpty()) {
             Category topCat = (Category) topCats.get(0)[0];
             BigDecimal topAmount = (BigDecimal) topCats.get(0)[1];
             summary.setTopCategory(topCat.getDisplayName());
             summary.setTopCategoryAmount(topAmount);
         } else {
-            // fallback to all time top
-            List<Object[]> allTop = expenseRepository.sumGroupedByCategory(null, null);
+            List<Object[]> allTop = expenseRepository.sumGroupedByCategory(user, null, null);
             if (!allTop.isEmpty()) {
                 Category topCat = (Category) allTop.get(0)[0];
                 BigDecimal topAmount = (BigDecimal) allTop.get(0)[1];
@@ -154,7 +185,12 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<CategorySummaryDto> getCategoryBreakdown(LocalDate startDate, LocalDate endDate) {
-        List<Object[]> rows = expenseRepository.sumGroupedByCategory(startDate, endDate);
+        return getCategoryBreakdown(userService.getCurrentAuthenticatedUser(), startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategorySummaryDto> getCategoryBreakdown(User user, LocalDate startDate, LocalDate endDate) {
+        List<Object[]> rows = expenseRepository.sumGroupedByCategory(user, startDate, endDate);
         BigDecimal totalSum = BigDecimal.ZERO;
         for (Object[] row : rows) {
             totalSum = totalSum.add((BigDecimal) row[1]);
@@ -187,13 +223,18 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<DailySpendingDto> getDailySpending(int days) {
+        return getDailySpending(userService.getCurrentAuthenticatedUser(), days);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailySpendingDto> getDailySpending(User user, int days) {
         if (days < 1) days = 14;
         if (days > 90) days = 90;
 
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
 
-        List<Object[]> rawList = expenseRepository.sumGroupedByDate(startDate, endDate);
+        List<Object[]> rawList = expenseRepository.sumGroupedByDate(user, startDate, endDate);
         Map<LocalDate, Object[]> map = new HashMap<>();
         for (Object[] row : rawList) {
             LocalDate date = (LocalDate) row[0];
@@ -232,7 +273,12 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public void exportToCsv(Writer writer, String search, Category category, LocalDate startDate, LocalDate endDate) {
-        List<Expense> expenses = getExpenses(search, category, startDate, endDate, "expenseDate", "desc");
+        exportToCsv(userService.getCurrentAuthenticatedUser(), writer, search, category, startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
+    public void exportToCsv(User user, Writer writer, String search, Category category, LocalDate startDate, LocalDate endDate) {
+        List<Expense> expenses = getExpenses(user, search, category, startDate, endDate, "expenseDate", "desc");
         PrintWriter printWriter = new PrintWriter(writer);
         printWriter.println("ID,Date,Title,Category,Amount,Currency,Payment Method,Notes");
 
@@ -257,35 +303,47 @@ public class ExpenseService {
     }
 
     public void seedInitialDataIfEmpty() {
-        if (expenseRepository.count() == 0) {
-            seedSampleExpenses();
+        User demoUser = userService.seedDefaultDemoUserIfEmpty();
+        if (expenseRepository.countByUser(demoUser) == 0) {
+            seedSampleExpensesForUser(demoUser);
         }
     }
 
     public void resetToSampleData() {
-        expenseRepository.deleteAll();
-        seedSampleExpenses();
+        resetToSampleData(userService.getCurrentAuthenticatedUser());
     }
 
-    private void seedSampleExpenses() {
+    public void resetToSampleData(User user) {
+        expenseRepository.deleteAllByUser(user);
+        seedSampleExpensesForUser(user);
+    }
+
+    public void seedSampleExpensesForUser(User user) {
         LocalDate today = LocalDate.now();
 
         List<Expense> list = List.of(
-                new Expense("Vegetables & Groceries", new BigDecimal("850.00"), "INR", Category.GROCERIES, today, "UPI / Wallet", "Fresh vegetables and household essentials"),
-                new Expense("Chai & Samosa Snacks", new BigDecimal("120.00"), "INR", Category.FOOD, today, "Cash", "Evening tea and snacks with friends"),
-                new Expense("Metro Card Recharge", new BigDecimal("500.00"), "INR", Category.TRANSPORTATION, today.minusDays(1), "UPI / Wallet", "Monthly metro smart card top-up"),
-                new Expense("Family Dinner at Restaurant", new BigDecimal("1850.00"), "INR", Category.FOOD, today.minusDays(1), "Debit Card", "Weekend family dinner"),
-                new Expense("Broadband Internet Bill", new BigDecimal("799.00"), "INR", Category.UTILITIES, today.minusDays(3), "Bank Transfer", "High-speed optical fiber monthly recharge"),
-                new Expense("Pharmacy - Medicines", new BigDecimal("380.00"), "INR", Category.HEALTH, today.minusDays(4), "UPI / Wallet", "Vitamins and first aid essentials"),
-                new Expense("Movie Tickets (PVR)", new BigDecimal("650.00"), "INR", Category.ENTERTAINMENT, today.minusDays(5), "Credit Card", "Weekend movie tickets with popcorn"),
-                new Expense("Cotton Casual Shirts", new BigDecimal("1499.00"), "INR", Category.SHOPPING, today.minusDays(6), "Credit Card", "Online shopping summer festival sale"),
-                new Expense("Petrol / Fuel Fill-up", new BigDecimal("1200.00"), "INR", Category.TRANSPORTATION, today.minusDays(7), "UPI / Wallet", "Bike and car fuel refill"),
-                new Expense("House Rent Contribution", new BigDecimal("12500.00"), "INR", Category.HOUSING, today.minusDays(10), "Bank Transfer", "Monthly room / apartment rent share"),
-                new Expense("Java Coding Reference Book", new BigDecimal("650.00"), "INR", Category.EDUCATION, today.minusDays(11), "Debit Card", "Programming and algorithm book"),
-                new Expense("Salon & Haircut", new BigDecimal("250.00"), "INR", Category.PERSONAL, today.minusDays(12), "Cash", "Haircut and styling"),
-                new Expense("Dairy Milk & Fresh Fruits", new BigDecimal("320.00"), "INR", Category.GROCERIES, today.minusDays(13), "UPI / Wallet", "Milk, yogurt, and bananas")
+                createSample(user, "Vegetables & Groceries", new BigDecimal("850.00"), "INR", Category.GROCERIES, today, "UPI / Wallet", "Fresh vegetables and household essentials"),
+                createSample(user, "Chai & Samosa Snacks", new BigDecimal("120.00"), "INR", Category.FOOD, today, "Cash", "Evening tea and snacks with friends"),
+                createSample(user, "Metro Card Recharge", new BigDecimal("500.00"), "INR", Category.TRANSPORTATION, today.minusDays(1), "UPI / Wallet", "Monthly metro smart card top-up"),
+                createSample(user, "Family Dinner at Restaurant", new BigDecimal("1850.00"), "INR", Category.FOOD, today.minusDays(1), "Debit Card", "Weekend family dinner"),
+                createSample(user, "Broadband Internet Bill", new BigDecimal("799.00"), "INR", Category.UTILITIES, today.minusDays(3), "Bank Transfer", "High-speed optical fiber monthly recharge"),
+                createSample(user, "Pharmacy - Medicines", new BigDecimal("380.00"), "INR", Category.HEALTH, today.minusDays(4), "UPI / Wallet", "Vitamins and first aid essentials"),
+                createSample(user, "Movie Tickets (PVR)", new BigDecimal("650.00"), "INR", Category.ENTERTAINMENT, today.minusDays(5), "Credit Card", "Weekend movie tickets with popcorn"),
+                createSample(user, "Cotton Casual Shirts", new BigDecimal("1499.00"), "INR", Category.SHOPPING, today.minusDays(6), "Credit Card", "Online shopping summer festival sale"),
+                createSample(user, "Petrol / Fuel Fill-up", new BigDecimal("1200.00"), "INR", Category.TRANSPORTATION, today.minusDays(7), "UPI / Wallet", "Bike and car fuel refill"),
+                createSample(user, "House Rent Contribution", new BigDecimal("12500.00"), "INR", Category.HOUSING, today.minusDays(10), "Bank Transfer", "Monthly room / apartment rent share"),
+                createSample(user, "Java Coding Reference Book", new BigDecimal("650.00"), "INR", Category.EDUCATION, today.minusDays(11), "Debit Card", "Programming and algorithm book"),
+                createSample(user, "Salon & Haircut", new BigDecimal("250.00"), "INR", Category.PERSONAL, today.minusDays(12), "Cash", "Haircut and styling"),
+                createSample(user, "Dairy Milk & Fresh Fruits", new BigDecimal("320.00"), "INR", Category.GROCERIES, today.minusDays(13), "UPI / Wallet", "Milk, yogurt, and bananas")
         );
 
         expenseRepository.saveAll(list);
+    }
+
+    private Expense createSample(User user, String title, BigDecimal amount, String currency, Category category,
+                                 LocalDate expenseDate, String paymentMethod, String notes) {
+        Expense expense = new Expense(title, amount, currency, category, expenseDate, paymentMethod, notes);
+        expense.setUser(user);
+        return expense;
     }
 }

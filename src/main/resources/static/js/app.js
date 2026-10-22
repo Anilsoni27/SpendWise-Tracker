@@ -142,11 +142,53 @@
 
     async function init() {
         initTheme();
+        const user = await checkAuth();
+        if (!user) return;
         displayTodayDate();
         initCurrencyPreference();
+        setupUserMenu(user);
         setupEventListeners();
         await loadCategories();
         await refreshAllData();
+    }
+
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (!res.ok) {
+                window.location.replace('/login.html');
+                return null;
+            }
+            const user = await res.json();
+            return user;
+        } catch (e) {
+            window.location.replace('/login.html');
+            return null;
+        }
+    }
+
+    function setupUserMenu(user) {
+        if (!user) return;
+        const userFullName = document.getElementById('userFullName');
+        const userUsername = document.getElementById('userUsername');
+        const userAvatar = document.getElementById('userAvatar');
+        const btnLogout = document.getElementById('btnLogout');
+
+        if (userFullName) userFullName.textContent = user.fullName || user.username;
+        if (userUsername) userUsername.textContent = '@' + user.username;
+        if (userAvatar) {
+            const initial = (user.fullName || user.username || 'U').trim().charAt(0).toUpperCase();
+            userAvatar.textContent = initial;
+        }
+
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async () => {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                } catch(e) {}
+                window.location.replace('/login.html');
+            });
+        }
     }
 
     function initTheme() {
@@ -284,6 +326,10 @@
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.replace('/login.html');
+                    return null;
+                }
                 let errData;
                 try {
                     errData = await response.json();
