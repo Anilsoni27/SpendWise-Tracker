@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendWise — Expense Tracker</title>
+    <meta name="description" content="SpendWise is a clean, practical personal expense tracker built with Spring Boot.">
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('spendwise_theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch(e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/styles.css?v=3.2.0">
+    <!-- Chart.js for simple, clean charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="container topbar-content">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="brand-name">SpendWise</h1>
+                    <span class="brand-tag">Expense Tracker</span>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <span class="today-date" id="currentDateDisplay">Today</span>
+                
+                <!-- Global Currency Preference Selector -->
+                <div class="currency-selector-wrapper" title="Currency Preference">
+                    <label for="currencySelector" class="visually-hidden">Currency</label>
+                    <select id="currencySelector" class="currency-select" aria-label="Select currency preference">
+                        <option value="INR" selected>₹ INR</option>
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="GBP">£ GBP</option>
+                        <option value="JPY">¥ JPY</option>
+                        <option value="CAD">CA$ CAD</option>
+                        <option value="AUD">A$ AUD</option>
+                        <option value="AED">AED</option>
+                        <option value="SGD">SG$ SGD</option>
+                        <option value="CHF">CHF</option>
+                    </select>
+                </div>
+
+                <!-- Light / Dark Theme Toggle Button -->
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode" aria-label="Toggle light or dark theme">
+                    <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <button class="btn btn-secondary btn-sm" id="btnExportCsv" title="Download expenses as CSV">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export CSV
+                </button>
+                <button class="btn btn-primary" id="btnOpenAddModal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add Expense
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container page-content">
+        <!-- Summary Totals Row -->
+        <section class="summary-grid" aria-label="Spending Summary">
+            <div class="summary-card">
+                <div class="summary-label">Today's Spending</div>
+                <div class="summary-value" id="statTodayTotal">₹0.00</div>
+                <div class="summary-sub" id="statYesterdaySub">Yesterday: ₹0.00</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">This Month's Spending</div>
+                <div class="summary-value" id="statMonthTotal">₹0.00</div>
+                <div class="summary-sub" id="statLastMonthSub">Last month: ₹0.00</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">Average per Expense</div>
+                <div class="summary-value" id="statAvgExpense">₹0.00</div>
+                <div class="summary-sub" id="statTotalCountSub">0 transactions recorded</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">Top Spending Category</div>
+                <div class="summary-value summary-value-sm" id="statTopCategory">—</div>
+                <div class="summary-sub" id="statTopCategorySub">₹0.00 this month</div>
+            </div>
+        </section>
+
+        <!-- Visual Analytics Row -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2 class="chart-title">Spending by Category</h2>
+                    <span class="chart-subtitle">All-time category distribution</span>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-canvas-wrapper pie-wrapper">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="category-legend" id="categoryLegend">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2 class="chart-title">Daily Spending (Past 14 Days)</h2>
+                    <span class="chart-subtitle">Trends and day-to-day fluctuations</span>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-canvas-wrapper bar-wrapper">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Expenses Management Section -->
+        <section class="expenses-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Transactions</h2>
+                    <p class="section-subtitle" id="tableFilterSummary">Showing all expenses</p>
+                </div>
+                <div class="header-tools">
+                    <button class="btn btn-text btn-sm" id="btnResetDemo" title="Reset sample database items">
+                        Reset Sample Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Controls Bar -->
+            <div class="filter-bar">
+                <div class="filter-group search-group">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="filterSearch" class="form-control" placeholder="Search title, notes, or payment..." autocomplete="off">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filterCategory" class="form-control">
+                        <option value="">All Categories</option>
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <select id="filterDateRange" class="form-control">
+                        <option value="all">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="last_month">Last Month</option>
+                        <option value="custom">Custom Date Range...</option>
+                    </select>
+                </div>
+
+                <div class="filter-group custom-date-group" id="customDateRangeInputs" style="display: none;">
+                    <input type="date" id="filterStartDate" class="form-control" title="Start date">
+                    <span class="date-sep">to</span>
+                    <input type="date" id="filterEndDate" class="form-control" title="End date">
+                </div>
+
+                <div class="filter-group">
+                    <select id="filterSort" class="form-control">
+                        <option value="expenseDate:desc">Date: Newest first</option>
+                        <option value="expenseDate:asc">Date: Oldest first</option>
+                        <option value="amount:desc">Amount: Highest first</option>
+                        <option value="amount:asc">Amount: Lowest first</option>
+                        <option value="title:asc">Title: A to Z</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-secondary btn-sm" id="btnClearFilters" style="display: none;">
+                    Clear Filters
+                </button>
+            </div>
+
+            <!-- Expenses Table -->
+            <div class="table-container">
+                <table class="expenses-table" id="expensesTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 130px;">Date</th>
+                            <th>Description</th>
+                            <th style="width: 170px;">Category</th>
+                            <th style="width: 140px;">Payment Method</th>
+                            <th style="width: 140px;" class="text-right">Amount</th>
+                            <th style="width: 120px;" class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesTableBody">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                            <line x1="2" y1="10" x2="22" y2="10"></line>
+                        </svg>
+                    </div>
+                    <h3 class="empty-title">No expenses found</h3>
+                    <p class="empty-desc">There are no expense records matching your current filter criteria.</p>
+                    <button class="btn btn-secondary btn-sm" id="btnEmptyReset">Reset Filters</button>
+                </div>
+            </div>
+
+            <!-- Table Summary Bar -->
+            <div class="table-footer-bar" id="tableFooterBar">
+                <div class="footer-count" id="footerRecordCount">0 expenses</div>
+                <div class="footer-total">
+                    Filtered Total: <strong id="footerFilteredTotal">₹0.00</strong>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add / Edit Expense Modal Dialog -->
+    <div class="modal-backdrop" id="expenseModal" aria-hidden="true" role="dialog">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Add Expense</h3>
+                <button class="btn-close" id="btnModalClose" aria-label="Close dialog">&times;</button>
+            </div>
+
+            <form id="expenseForm" novalidate>
+                <input type="hidden" id="formExpenseId" value="">
+
+                <div class="form-body">
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="formTitle" class="form-label">Title / Merchant <span class="required">*</span></label>
+                            <input type="text" id="formTitle" class="form-control" placeholder="e.g. Vegetables, Metro, Internet" maxlength="120" required>
+                            <div class="field-error" id="errorTitle"></div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="formCategory" class="form-label">Category <span class="required">*</span></label>
+                            <select id="formCategory" class="form-control" required>
+                                <!-- Populated dynamically -->
+                            </select>
+                            <div class="field-error" id="errorCategory"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="formCurrency" class="form-label">Currency <span class="required">*</span></label>
+                            <select id="formCurrency" class="form-control" required>
+                                <option value="INR" selected>INR (₹)</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="JPY">JPY (¥)</option>
+                                <option value="CAD">CAD (CA$)</option>
+                                <option value="AUD">AUD (A$)</option>
+                                <option value="AED">AED (AED)</option>
+                                <option value="SGD">SGD (SG$)</option>
+                                <option value="CHF">CHF (CHF)</option>
+                            </select>
+                            <div class="field-error" id="errorCurrency"></div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="formAmount" class="form-label"><span id="formAmountLabel">Amount (₹)</span> <span class="required">*</span></label>
+                            <input type="number" id="formAmount" class="form-control" placeholder="0.00" step="0.01" min="0.01" required>
+                            <div class="field-error" id="errorAmount"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label for="formDate" class="form-label">Date <span class="required">*</span></label>
+                            <input type="date" id="formDate" class="form-control" required>
+                            <div class="field-error" id="errorDate"></div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="formPaymentMethod" class="form-label">Payment Method <span class="required">*</span></label>
+                            <select id="formPaymentMethod" class="form-control" required>
+                                <option value="UPI / Wallet" selected>UPI / Digital Wallet</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Debit Card">Debit Card</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="field-error" id="errorPaymentMethod"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="formNotes" class="form-label">Notes (Optional)</label>
+                        <textarea id="formNotes" class="form-control" rows="2" placeholder="Additional details, invoice number, or memo" maxlength="255"></textarea>
+                        <div class="field-error" id="errorNotes"></div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnModalCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnModalSave">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-backdrop" id="deleteModal" aria-hidden="true" role="dialog">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <h3 class="modal-title">Delete Expense</h3>
+                <button class="btn-close" id="btnDeleteModalClose" aria-label="Close dialog">&times;</button>
+            </div>
+            <div class="form-body">
+                <p class="confirm-message">
+                    Are you sure you want to delete <strong id="deleteExpenseTitle"></strong>?
+                </p>
+                <p class="confirm-sub">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCancelDelete">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmDelete">Delete Expense</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Toast Notification Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <script src="/js/app.js?v=3.2.0"></script>
+</body>
+</html>
