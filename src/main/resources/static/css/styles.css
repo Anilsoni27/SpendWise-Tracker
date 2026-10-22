@@ -1320,6 +1320,11 @@ select.form-control {
     padding-left: 32px !important;
 }
 
+/* Global Utility */
+.hidden {
+    display: none !important;
+}
+
 .btn-toggle-password {
     position: absolute;
     right: 10px;
@@ -1327,12 +1332,22 @@ select.form-control {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
+    padding: 6px;
     border-radius: 4px;
     transition: var(--transition);
+}
+
+.btn-toggle-password svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
+.btn-toggle-password svg.hidden {
+    display: none !important;
 }
 
 .btn-toggle-password:hover {
