@@ -262,7 +262,7 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<DailySpendingDto> getDailySpending(User user, int days, LocalDate clientEndDate) {
-        if (days < 1) days = 14;
+        if (days < 1) days = 8;
         if (days > 90) days = 90;
 
         LocalDate endDate = (clientEndDate != null) ? clientEndDate : LocalDate.now();

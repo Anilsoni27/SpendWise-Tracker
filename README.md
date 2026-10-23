@@ -36,7 +36,7 @@ Designed with a calm, professional aesthetic, living dynamic background effects,
   - **Top Spending Category** & monthly consumption
 - **Visual Analytics with Real Data**:
   - **Category Breakdown (Donut Chart)**: Percentage and absolute consumption per category with color-coded badges.
-  - **Daily Spending (14-Day Trend Bar Chart)**: Optimal 2-week view of day-to-day spending patterns and weekend spikes.
+  - **Daily Spending (8-Day Trend Bar Chart)**: Dynamic view from account creation date up to 8 days showing day-to-day spending patterns and weekend spikes.
 
 ### 🌍 4. Multi-Currency Support
 - Live currency selector supporting **INR (`₹`)**, **USD (`$`)**, **EUR (`€`)**, **GBP (`£`)**, **JPY (`¥`)**, **CAD (`CA$`)**, **AUD (`A$`)**, **AED (`AED`)**, **SGD (`SG$`)**, and **CHF (`CHF`)**.
@@ -124,7 +124,7 @@ Open [http://localhost:8080](http://localhost:8080) in your web browser.
 | `GET` | `/api/expenses/summary` | Today, month, and all-time spending totals |
 | `GET` | `/api/expenses/categories` | List of all expense categories and display colors |
 | `GET` | `/api/expenses/charts/categories` | Category spending breakdown for doughnut chart |
-| `GET` | `/api/expenses/charts/daily?days=14` | Daily spending sequence for 14-day bar chart |
+| `GET` | `/api/expenses/charts/daily?days=8` | Daily spending sequence for 8-day bar chart |
 | `GET` | `/api/expenses/export` | Download filtered expenses as CSV file |
 | `POST` | `/api/expenses/reset-demo` | Reset current user's expenses to sample data |
 

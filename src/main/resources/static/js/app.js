@@ -828,9 +828,10 @@
                 });
             }
 
-            // Cap the lookback to a maximum of 14 days
+            // Cap the lookback to a maximum of 8 days
+            const maxDays = 8;
             const maxLookback = new Date(todayStart);
-            maxLookback.setDate(todayStart.getDate() - 13);
+            maxLookback.setDate(todayStart.getDate() - (maxDays - 1));
             if (startDate < maxLookback) {
                 startDate = maxLookback;
             }
@@ -841,16 +842,16 @@
 
             const msPerDay = 1000 * 60 * 60 * 24;
             const diffDays = Math.round((todayStart - startDate) / msPerDay);
-            const daysCount = Math.max(1, diffDays + 1);
+            const daysCount = Math.min(maxDays, Math.max(1, diffDays + 1));
 
             // Dynamically update card title and subtitle
             if (elements.dailyChartTitle) {
                 if (daysCount === 1) {
                     elements.dailyChartTitle.textContent = "Daily Spending (Today)";
-                } else if (daysCount < 14) {
+                } else if (daysCount < 8) {
                     elements.dailyChartTitle.textContent = `Daily Spending (Past ${daysCount} Days)`;
                 } else {
-                    elements.dailyChartTitle.textContent = "Daily Spending (Past 14 Days)";
+                    elements.dailyChartTitle.textContent = "Daily Spending (Past 8 Days)";
                 }
             }
 
@@ -858,10 +859,10 @@
             if (subtitleEl) {
                 if (daysCount === 1) {
                     subtitleEl.textContent = "Spending recorded since joining today";
-                } else if (daysCount < 14) {
+                } else if (daysCount < 8) {
                     subtitleEl.textContent = `Daily activity since joining (${daysCount} days)`;
                 } else {
-                    subtitleEl.textContent = "Trends and day-to-day fluctuations";
+                    subtitleEl.textContent = "Trends and day-to-day fluctuations (8 days)";
                 }
             }
 
@@ -892,7 +893,7 @@
                 amounts = dateList.map(item => dayMap[item.iso]);
             } else {
                 const todayIso = formatDateIso(now);
-                const data = await apiFetch(`/api/expenses/charts/daily?days=14&endDate=${todayIso}`);
+                const data = await apiFetch(`/api/expenses/charts/daily?days=8&endDate=${todayIso}`);
                 if (!data) return;
                 labels = data.map(d => d.label);
                 amounts = data.map(d => convertAmount(d.amount, 'INR', targetCur));
@@ -918,7 +919,7 @@
                         backgroundColor: barBg,
                         hoverBackgroundColor: barHover,
                         borderRadius: 4,
-                        maxBarThickness: daysCount === 1 ? 52 : (daysCount <= 4 ? 40 : 28)
+                        maxBarThickness: daysCount === 1 ? 52 : (daysCount <= 4 ? 42 : 36)
                     }]
                 },
                 options: {
