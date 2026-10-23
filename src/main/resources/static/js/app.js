@@ -296,9 +296,13 @@
         elements.btnClearFilters.addEventListener('click', resetFilters);
         elements.btnEmptyReset.addEventListener('click', resetFilters);
 
-        // Export and Reset Demo
-        elements.btnExportCsv.addEventListener('click', handleExportCsv);
-        elements.btnResetDemo.addEventListener('click', handleResetDemo);
+        // Export CSV
+        if (elements.btnExportCsv) {
+            elements.btnExportCsv.addEventListener('click', handleExportCsv);
+        }
+        if (elements.btnResetDemo) {
+            elements.btnResetDemo.addEventListener('click', handleResetDemo);
+        }
 
         // Close modal on Escape
         window.addEventListener('keydown', (e) => {
