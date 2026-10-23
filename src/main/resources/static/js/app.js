@@ -803,7 +803,11 @@
             let startDate = new Date(todayStart);
 
             if (state.currentUser && state.currentUser.createdAt) {
-                const regDate = new Date(state.currentUser.createdAt);
+                let regIso = state.currentUser.createdAt;
+                if (typeof regIso === 'string' && !regIso.endsWith('Z') && !regIso.includes('+') && !regIso.includes('-', 10)) {
+                    regIso += 'Z';
+                }
+                const regDate = new Date(regIso);
                 if (!isNaN(regDate.getTime())) {
                     startDate = new Date(regDate.getFullYear(), regDate.getMonth(), regDate.getDate());
                 }
