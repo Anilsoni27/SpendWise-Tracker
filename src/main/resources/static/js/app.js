@@ -349,10 +349,10 @@
 
     // Refresh everything
     async function refreshAllData() {
+        await loadExpenses();
         await Promise.all([
             loadSummary(),
-            loadCharts(),
-            loadExpenses()
+            loadCharts()
         ]);
     }
 
@@ -391,10 +391,77 @@
     // Summary Cards (Calculated and formatted in user's preferred currency)
     async function loadSummary() {
         try {
-            const summary = await apiFetch('/api/expenses/summary');
             const targetCur = state.currentCurrency;
 
-            // If user has expenses with mixed currencies or converted values:
+            // If we have state.expenses loaded, calculate exact multi-currency summary:
+            if (state.expenses && state.expenses.length > 0 && !state.isFiltered) {
+                const now = new Date();
+                const todayIso = formatDateIso(now);
+                const yestDate = new Date(now);
+                yestDate.setDate(now.getDate() - 1);
+                const yestIso = formatDateIso(yestDate);
+                const currMonthPrefix = todayIso.substring(0, 7); // 'YYYY-MM'
+                const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const prevMonthPrefix = formatDateIso(prevMonthDate).substring(0, 7);
+
+                let todaySum = 0;
+                let yestSum = 0;
+                let monthSum = 0;
+                let lastMonthSum = 0;
+                let allTimeSum = 0;
+                const catSums = {};
+
+                state.expenses.forEach(exp => {
+                    const converted = convertAmount(exp.amount, exp.currency || 'INR', targetCur);
+                    allTimeSum += converted;
+
+                    const dateStr = exp.expenseDate;
+                    if (dateStr === todayIso) {
+                        todaySum += converted;
+                    }
+                    if (dateStr === yestIso) {
+                        yestSum += converted;
+                    }
+                    if (dateStr && dateStr.startsWith(currMonthPrefix)) {
+                        monthSum += converted;
+                        catSums[exp.category] = (catSums[exp.category] || 0) + converted;
+                    }
+                    if (dateStr && dateStr.startsWith(prevMonthPrefix)) {
+                        lastMonthSum += converted;
+                    }
+                });
+
+                let topCatId = null;
+                let topCatAmt = 0;
+                for (const [cat, amt] of Object.entries(catSums)) {
+                    if (amt > topCatAmt) {
+                        topCatAmt = amt;
+                        topCatId = cat;
+                    }
+                }
+                const topCatInfo = topCatId ? (state.categoryMap[topCatId] || { displayName: topCatId }) : null;
+                const avgAmt = state.expenses.length > 0 ? (allTimeSum / state.expenses.length) : 0;
+
+                elements.statTodayTotal.textContent = formatCurrency(todaySum, targetCur);
+                elements.statYesterdaySub.textContent = `Yesterday: ${formatCurrency(yestSum, targetCur)}`;
+
+                elements.statMonthTotal.textContent = formatCurrency(monthSum, targetCur);
+                elements.statLastMonthSub.textContent = `Last month: ${formatCurrency(lastMonthSum, targetCur)}`;
+
+                elements.statAvgExpense.textContent = formatCurrency(avgAmt, targetCur);
+                elements.statTotalCountSub.textContent = `${state.expenses.length} total recorded`;
+
+                elements.statTopCategory.textContent = topCatInfo ? topCatInfo.displayName : 'None';
+                elements.statTopCategorySub.textContent = topCatAmt > 0
+                    ? `${formatCurrency(topCatAmt, targetCur)} this month`
+                    : 'No expenses yet';
+                return;
+            }
+
+            // Fallback to backend summary API
+            const summary = await apiFetch('/api/expenses/summary');
+            if (!summary) return;
+
             const todayAmt = convertAmount(summary.todayTotal, 'INR', targetCur);
             const yesterdayAmt = convertAmount(summary.yesterdayTotal, 'INR', targetCur);
             const monthAmt = convertAmount(summary.thisMonthTotal, 'INR', targetCur);

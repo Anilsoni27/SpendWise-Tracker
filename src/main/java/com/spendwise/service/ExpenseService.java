@@ -9,7 +9,9 @@ import com.spendwise.model.Category;
 import com.spendwise.model.Expense;
 import com.spendwise.model.User;
 import com.spendwise.repository.ExpenseRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,14 +61,31 @@ public class ExpenseService {
             sort = sort.and(Sort.by(Sort.Direction.DESC, "id"));
         }
 
-        return expenseRepository.findWithFilters(
-                user,
-                (search != null && !search.trim().isEmpty()) ? search.trim() : null,
-                category,
-                startDate,
-                endDate,
-                sort
-        );
+        Specification<Expense> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("user"), user));
+
+            if (category != null) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("expenseDate"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("expenseDate"), endDate));
+            }
+            if (search != null && !search.trim().isEmpty()) {
+                String term = "%" + search.trim().toLowerCase() + "%";
+                Predicate titleMatch = cb.like(cb.lower(root.get("title")), term);
+                Predicate notesMatch = cb.like(cb.lower(cb.coalesce(root.get("notes"), "")), term);
+                Predicate paymentMatch = cb.like(cb.lower(cb.coalesce(root.get("paymentMethod"), "")), term);
+                predicates.add(cb.or(titleMatch, notesMatch, paymentMatch));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return expenseRepository.findAll(spec, sort);
     }
 
     @Transactional(readOnly = true)
@@ -164,14 +183,14 @@ public class ExpenseService {
         }
 
         // Top category this month
-        List<Object[]> topCats = expenseRepository.sumGroupedByCategory(user, startOfCurrentMonth, endOfCurrentMonth);
+        List<Object[]> topCats = expenseRepository.sumGroupedByCategoryBetweenDates(user, startOfCurrentMonth, endOfCurrentMonth);
         if (!topCats.isEmpty()) {
             Category topCat = (Category) topCats.get(0)[0];
             BigDecimal topAmount = (BigDecimal) topCats.get(0)[1];
             summary.setTopCategory(topCat.getDisplayName());
             summary.setTopCategoryAmount(topAmount);
         } else {
-            List<Object[]> allTop = expenseRepository.sumGroupedByCategory(user, null, null);
+            List<Object[]> allTop = expenseRepository.sumGroupedByCategoryAllTime(user);
             if (!allTop.isEmpty()) {
                 Category topCat = (Category) allTop.get(0)[0];
                 BigDecimal topAmount = (BigDecimal) allTop.get(0)[1];
@@ -190,7 +209,12 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<CategorySummaryDto> getCategoryBreakdown(User user, LocalDate startDate, LocalDate endDate) {
-        List<Object[]> rows = expenseRepository.sumGroupedByCategory(user, startDate, endDate);
+        List<Object[]> rows;
+        if (startDate != null && endDate != null) {
+            rows = expenseRepository.sumGroupedByCategoryBetweenDates(user, startDate, endDate);
+        } else {
+            rows = expenseRepository.sumGroupedByCategoryAllTime(user);
+        }
         BigDecimal totalSum = BigDecimal.ZERO;
         for (Object[] row : rows) {
             totalSum = totalSum.add((BigDecimal) row[1]);

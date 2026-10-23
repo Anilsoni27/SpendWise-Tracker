@@ -1,10 +1,9 @@
 package com.spendwise.repository;
 
-import com.spendwise.model.Category;
 import com.spendwise.model.Expense;
 import com.spendwise.model.User;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,25 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-
-    @Query("SELECT e FROM Expense e WHERE " +
-           "e.user = :user AND " +
-           "(:category IS NULL OR e.category = :category) AND " +
-           "(:startDate IS NULL OR e.expenseDate >= :startDate) AND " +
-           "(:endDate IS NULL OR e.expenseDate <= :endDate) AND " +
-           "(:search IS NULL OR TRIM(:search) = '' OR " +
-           " LOWER(e.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(e.notes) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(e.paymentMethod) LIKE LOWER(CONCAT('%', :search, '%')))")
-    List<Expense> findWithFilters(
-            @Param("user") User user,
-            @Param("search") String search,
-            @Param("category") Category category,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            Sort sort
-    );
+public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpecificationExecutor<Expense> {
 
     @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e WHERE e.user = :user AND e.expenseDate = :date")
     BigDecimal sumAmountByDate(@Param("user") User user, @Param("date") LocalDate date);
@@ -48,13 +29,19 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     @Query("SELECT e.category, SUM(e.amount), COUNT(e) FROM Expense e " +
            "WHERE e.user = :user AND " +
-           "      (:startDate IS NULL OR e.expenseDate >= :startDate) AND " +
-           "      (:endDate IS NULL OR e.expenseDate <= :endDate) " +
+           "      e.expenseDate BETWEEN :startDate AND :endDate " +
            "GROUP BY e.category ORDER BY SUM(e.amount) DESC")
-    List<Object[]> sumGroupedByCategory(
+    List<Object[]> sumGroupedByCategoryBetweenDates(
             @Param("user") User user,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT e.category, SUM(e.amount), COUNT(e) FROM Expense e " +
+           "WHERE e.user = :user " +
+           "GROUP BY e.category ORDER BY SUM(e.amount) DESC")
+    List<Object[]> sumGroupedByCategoryAllTime(
+            @Param("user") User user
     );
 
     @Query("SELECT e.expenseDate, SUM(e.amount), COUNT(e) FROM Expense e " +
