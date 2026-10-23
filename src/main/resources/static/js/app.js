@@ -663,11 +663,11 @@
         try {
             const targetCur = state.currentCurrency;
             let data = [];
+            let grandTotal = 0;
 
             // If state.expenses is loaded, compute dynamic multi-currency breakdown:
             if (state.expenses && state.expenses.length > 0) {
                 const catSums = {};
-                let grandTotal = 0;
 
                 state.expenses.forEach(exp => {
                     const converted = convertAmount(exp.amount, exp.currency || 'INR', targetCur);
@@ -697,8 +697,15 @@
                         totalAmount: convertAmount(item.totalAmount, 'INR', targetCur),
                         percentage: item.percentage
                     }));
+                    grandTotal = data.reduce((s, it) => s + it.totalAmount, 0);
                 }
             }
+
+            // Update center stat inside circular chart
+            const pieCenterLabel = document.getElementById('pieCenterLabel');
+            const pieCenterTotal = document.getElementById('pieCenterTotal');
+            if (pieCenterLabel) pieCenterLabel.textContent = 'Total';
+            if (pieCenterTotal) pieCenterTotal.textContent = formatCurrency(grandTotal, targetCur);
 
             // Render custom legend
             elements.categoryLegend.innerHTML = '';
@@ -754,13 +761,27 @@
                         backgroundColor: colors,
                         borderWidth: 2,
                         borderColor: donutBorder,
-                        hoverOffset: 3
+                        hoverOffset: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '68%',
+                    cutout: '58%',
+                    onHover: (event, activeElements) => {
+                        if (!pieCenterLabel || !pieCenterTotal) return;
+                        if (activeElements && activeElements.length > 0) {
+                            const idx = activeElements[0].index;
+                            const item = data[idx];
+                            if (item) {
+                                pieCenterLabel.textContent = item.displayName;
+                                pieCenterTotal.textContent = formatCurrency(item.totalAmount, targetCur);
+                            }
+                        } else {
+                            pieCenterLabel.textContent = 'Total';
+                            pieCenterTotal.textContent = formatCurrency(grandTotal, targetCur);
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: false
@@ -845,26 +866,9 @@
                 ? new Date(joinDate)
                 : new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate() - (totalSlots - 1));
 
-            // Dynamically update card title and subtitle
+            // Clean title: no subtitles or distracting active days indicators
             if (elements.dailyChartTitle) {
-                if (daysSinceJoin === 0) {
-                    elements.dailyChartTitle.textContent = "Daily Spending (8-Day Window)";
-                } else if (daysSinceJoin < 7) {
-                    elements.dailyChartTitle.textContent = "Daily Spending (8-Day Timeline)";
-                } else {
-                    elements.dailyChartTitle.textContent = "Daily Spending (Past 8 Days)";
-                }
-            }
-
-            const subtitleEl = document.getElementById('dailyChartSubtitle');
-            if (subtitleEl) {
-                if (daysSinceJoin === 0) {
-                    subtitleEl.textContent = "Projected 8-day timeline starting today";
-                } else if (daysSinceJoin < 7) {
-                    subtitleEl.textContent = `Daily timeline since joining (${daysSinceJoin + 1} days active)`;
-                } else {
-                    subtitleEl.textContent = "Daily spending trends over the past 8 days";
-                }
+                elements.dailyChartTitle.textContent = "Daily Spending";
             }
 
             const dayMap = {};

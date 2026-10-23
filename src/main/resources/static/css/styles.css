@@ -674,7 +674,7 @@ body {
     -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border-color);
     border-radius: 14px;
-    padding: 22px 24px;
+    padding: 18px 20px;
     display: flex;
     flex-direction: column;
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
@@ -685,8 +685,8 @@ body {
 }
 
 .chart-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -708,6 +708,7 @@ body {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    justify-content: space-between;
 }
 
 .chart-canvas-wrapper {
@@ -716,26 +717,66 @@ body {
 }
 
 .pie-wrapper {
-    height: 220px;
+    height: 230px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.pie-center-stat {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+    max-width: 130px;
+    z-index: 2;
+}
+
+.pie-center-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.pie-center-value {
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-top: 2px;
+    white-space: nowrap;
 }
 
 .bar-wrapper {
-    height: 280px;
+    height: 250px;
+    flex-grow: 1;
 }
 
 .category-legend {
-    margin-top: 14px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 120px;
+    gap: 5px;
+    max-height: 110px;
     overflow-y: auto;
     padding-right: 4px;
     border-top: 1px solid var(--border-color);
-    padding-top: 10px;
+    padding-top: 8px;
 }
 
 .legend-item {
@@ -743,6 +784,13 @@ body {
     align-items: center;
     justify-content: space-between;
     font-size: 0.8rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+}
+
+.legend-item:hover {
+    background-color: var(--bg-card-hover);
 }
 
 .legend-left {
