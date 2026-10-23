@@ -62,7 +62,8 @@
         searchDebounceTimer: null,
         currentCurrency: localStorage.getItem('spendwise_currency') || 'INR',
         theme: localStorage.getItem('spendwise_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-        isFiltered: false
+        isFiltered: false,
+        currentUser: null
     };
 
     // DOM Elements
@@ -80,6 +81,7 @@
         statTopCategorySub: document.getElementById('statTopCategorySub'),
 
         categoryLegend: document.getElementById('categoryLegend'),
+        dailyChartTitle: document.getElementById('dailyChartTitle'),
 
         filterSearch: document.getElementById('filterSearch'),
         filterCategory: document.getElementById('filterCategory'),
@@ -144,6 +146,7 @@
         initTheme();
         const user = await checkAuth();
         if (!user) return;
+        state.currentUser = user;
         displayTodayDate();
         initCurrencyPreference();
         setupUserMenu(user);
@@ -794,14 +797,77 @@
             const ctx = canvas.getContext('2d');
 
             const now = new Date();
-            const daysCount = 14;
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            // Start date: from the day the account was created (or earliest logged expense)
+            let startDate = new Date(todayStart);
+
+            if (state.currentUser && state.currentUser.createdAt) {
+                const regDate = new Date(state.currentUser.createdAt);
+                if (!isNaN(regDate.getTime())) {
+                    startDate = new Date(regDate.getFullYear(), regDate.getMonth(), regDate.getDate());
+                }
+            }
+
+            // Also include earlier logged expenses if user entered a previous date
+            if (state.expenses && state.expenses.length > 0) {
+                state.expenses.forEach(exp => {
+                    if (exp.expenseDate) {
+                        const parts = exp.expenseDate.split('-').map(Number);
+                        if (parts.length === 3) {
+                            const expD = new Date(parts[0], parts[1] - 1, parts[2]);
+                            if (expD < startDate) {
+                                startDate = expD;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Cap the lookback to a maximum of 14 days
+            const maxLookback = new Date(todayStart);
+            maxLookback.setDate(todayStart.getDate() - 13);
+            if (startDate < maxLookback) {
+                startDate = maxLookback;
+            }
+
+            if (startDate > todayStart) {
+                startDate = new Date(todayStart);
+            }
+
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const diffDays = Math.round((todayStart - startDate) / msPerDay);
+            const daysCount = Math.max(1, diffDays + 1);
+
+            // Dynamically update card title and subtitle
+            if (elements.dailyChartTitle) {
+                if (daysCount === 1) {
+                    elements.dailyChartTitle.textContent = "Daily Spending (Today)";
+                } else if (daysCount < 14) {
+                    elements.dailyChartTitle.textContent = `Daily Spending (Past ${daysCount} Days)`;
+                } else {
+                    elements.dailyChartTitle.textContent = "Daily Spending (Past 14 Days)";
+                }
+            }
+
+            const subtitleEl = document.getElementById('dailyChartSubtitle');
+            if (subtitleEl) {
+                if (daysCount === 1) {
+                    subtitleEl.textContent = "Spending recorded since joining today";
+                } else if (daysCount < 14) {
+                    subtitleEl.textContent = `Daily activity since joining (${daysCount} days)`;
+                } else {
+                    subtitleEl.textContent = "Trends and day-to-day fluctuations";
+                }
+            }
+
             const dayMap = {};
             const dateList = [];
 
-            // Compute past 14 days ending today in the browser's local timezone:
+            // Generate sequence from account creation day up to today
             for (let i = daysCount - 1; i >= 0; i--) {
-                const d = new Date(now);
-                d.setDate(now.getDate() - i);
+                const d = new Date(todayStart);
+                d.setDate(todayStart.getDate() - i);
                 const iso = formatDateIso(d);
                 const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 dayMap[iso] = 0;
@@ -848,7 +914,7 @@
                         backgroundColor: barBg,
                         hoverBackgroundColor: barHover,
                         borderRadius: 4,
-                        maxBarThickness: 28
+                        maxBarThickness: daysCount === 1 ? 52 : (daysCount <= 4 ? 40 : 28)
                     }]
                 },
                 options: {
