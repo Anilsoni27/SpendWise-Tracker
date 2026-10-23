@@ -21,7 +21,7 @@
             } catch(e) {}
         })();
     </script>
-    <link rel="stylesheet" href="/css/styles.css?v=4.5.0">
+    <link rel="stylesheet" href="/css/styles.css?v=4.6.0">
     <!-- Chart.js for simple, clean charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -193,12 +193,12 @@
 
         <!-- Visual Analytics Row -->
         <section class="charts-section">
-            <div class="chart-card">
+            <div class="chart-card category-chart-card">
                 <div class="chart-header">
                     <h2 class="chart-title">Spending by Category</h2>
                     <span class="chart-subtitle">All-time category distribution</span>
                 </div>
-                <div class="chart-body">
+                <div class="chart-body category-chart-body">
                     <div class="chart-canvas-wrapper pie-wrapper">
                         <canvas id="categoryChart"></canvas>
                         <div class="pie-center-stat" id="pieCenterStat">
@@ -212,7 +212,7 @@
                 </div>
             </div>
 
-            <div class="chart-card">
+            <div class="chart-card daily-chart-card">
                 <div class="chart-header">
                     <h2 class="chart-title" id="dailyChartTitle">Daily Spending</h2>
                 </div>
@@ -440,6 +440,6 @@
     <!-- Simple Toast Notification Container -->
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-    <script src="/js/app.js?v=4.5.0"></script>
+    <script src="/js/app.js?v=4.6.0"></script>
 </body>
 </html>

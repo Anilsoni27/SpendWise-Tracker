@@ -657,12 +657,12 @@ body {
 /* Charts Section */
 .charts-section {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 1.15fr 1fr;
     gap: 16px;
     margin-bottom: 24px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
     .charts-section {
         grid-template-columns: 1fr;
     }
@@ -708,7 +708,15 @@ body {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+}
+
+.category-chart-body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
+    gap: 18px;
+    flex-grow: 1;
 }
 
 .chart-canvas-wrapper {
@@ -717,11 +725,14 @@ body {
 }
 
 .pie-wrapper {
-    height: 230px;
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    margin: 0 auto;
 }
 
 .pie-center-stat {
@@ -736,13 +747,13 @@ body {
     text-align: center;
     pointer-events: none;
     user-select: none;
-    max-width: 130px;
+    max-width: 110px;
     z-index: 2;
 }
 
 .pie-center-label {
-    font-size: 0.68rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-muted);
@@ -753,7 +764,7 @@ body {
 }
 
 .pie-center-value {
-    font-size: 1.18rem;
+    font-size: 1.1rem;
     font-weight: 800;
     color: var(--text-primary);
     letter-spacing: -0.02em;
@@ -763,20 +774,21 @@ body {
 }
 
 .bar-wrapper {
-    height: 250px;
+    height: 230px;
     flex-grow: 1;
 }
 
 .category-legend {
-    margin-top: 8px;
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    max-height: 110px;
+    gap: 6px;
+    max-height: 210px;
     overflow-y: auto;
+    padding-left: 16px;
+    border-left: 1px solid var(--border-color);
     padding-right: 4px;
-    border-top: 1px solid var(--border-color);
-    padding-top: 8px;
 }
 
 .legend-item {
@@ -784,38 +796,87 @@ body {
     align-items: center;
     justify-content: space-between;
     font-size: 0.8rem;
-    padding: 3px 6px;
-    border-radius: 6px;
-    transition: background-color 0.15s ease;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    gap: 8px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+[data-theme="light"] .legend-item {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
 }
 
 .legend-item:hover {
     background-color: var(--bg-card-hover);
+    border-color: rgba(163, 230, 53, 0.3);
 }
 
 .legend-left {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-primary);
 }
 
 .legend-dot {
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 
-.legend-right {
-    font-variant-numeric: tabular-nums;
-    color: var(--text-secondary);
+.legend-name {
+    color: var(--text-primary);
     font-weight: 500;
     white-space: nowrap;
-    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.legend-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.legend-amt {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.legend-pct {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 680px) {
+    .category-chart-body {
+        flex-direction: column;
+        justify-content: center;
+        gap: 14px;
+    }
+
+    .pie-wrapper {
+        width: 100%;
+        max-width: 200px;
+        height: 200px;
+    }
+
+    .category-legend {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding-left: 0;
+        padding-top: 10px;
+        max-height: 140px;
+    }
 }
 
 /* Expenses Section: 30% Container */

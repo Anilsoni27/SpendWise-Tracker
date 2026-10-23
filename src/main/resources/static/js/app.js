@@ -710,7 +710,7 @@
             // Render custom legend
             elements.categoryLegend.innerHTML = '';
             if (data.length === 0) {
-                elements.categoryLegend.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 10px;">No expense data yet</div>';
+                elements.categoryLegend.innerHTML = '<div style="color: var(--text-muted); font-size: 0.82rem; text-align: center; padding: 18px 0;">No expense data yet</div>';
             } else {
                 data.forEach(item => {
                     const row = document.createElement('div');
@@ -718,10 +718,11 @@
                     row.innerHTML = `
                         <div class="legend-left">
                             <span class="legend-dot" style="background-color: ${item.color}"></span>
-                            <span>${escapeHtml(item.displayName)}</span>
+                            <span class="legend-name" title="${escapeHtml(item.displayName)}">${escapeHtml(item.displayName)}</span>
                         </div>
                         <div class="legend-right">
-                            ${formatCurrency(item.totalAmount, targetCur)} (${item.percentage}%)
+                            <span class="legend-amt">${formatCurrency(item.totalAmount, targetCur)}</span>
+                            <span class="legend-pct">(${item.percentage}%)</span>
                         </div>
                     `;
                     elements.categoryLegend.appendChild(row);
@@ -761,42 +762,56 @@
                         backgroundColor: colors,
                         borderWidth: 2,
                         borderColor: donutBorder,
-                        hoverOffset: 4
+                        hoverOffset: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '58%',
-                    onHover: (event, activeElements) => {
-                        if (!pieCenterLabel || !pieCenterTotal) return;
-                        if (activeElements && activeElements.length > 0) {
-                            const idx = activeElements[0].index;
-                            const item = data[idx];
-                            if (item) {
-                                pieCenterLabel.textContent = item.displayName;
-                                pieCenterTotal.textContent = formatCurrency(item.totalAmount, targetCur);
-                            }
-                        } else {
-                            pieCenterLabel.textContent = 'Total';
-                            pieCenterTotal.textContent = formatCurrency(grandTotal, targetCur);
-                        }
-                    },
                     plugins: {
                         legend: {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: isDark ? '#1F2937' : '#0F172A',
+                            enabled: true,
+                            position: 'nearest',
+                            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(15, 23, 42, 0.95)',
                             titleColor: '#F8FAFC',
-                            bodyColor: '#F8FAFC',
-                            borderColor: isDark ? '#2D3748' : '#334155',
+                            titleFont: {
+                                size: 13,
+                                weight: '700'
+                            },
+                            bodyColor: '#F1F5F9',
+                            bodyFont: {
+                                size: 12,
+                                weight: '500'
+                            },
+                            borderColor: isDark ? '#334155' : '#475569',
                             borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            boxWidth: 9,
+                            boxHeight: 9,
+                            usePointStyle: true,
                             callbacks: {
+                                title: function (tooltipItems) {
+                                    if (!tooltipItems || tooltipItems.length === 0) return '';
+                                    const idx = tooltipItems[0].dataIndex;
+                                    if (data[idx]) {
+                                        return data[idx].displayName;
+                                    }
+                                    return tooltipItems[0].label || '';
+                                },
                                 label: function (context) {
-                                    if (data.length === 0) return ' No expenses';
-                                    const val = context.raw;
-                                    return ` ${formatCurrency(val, targetCur)}`;
+                                    if (data.length === 0) return ' No expenses recorded';
+                                    const idx = context.dataIndex;
+                                    const item = data[idx];
+                                    const amtFormatted = formatCurrency(context.raw, targetCur);
+                                    const pct = (item && item.percentage !== undefined) ? item.percentage : 0;
+                                    return ` ${amtFormatted} (${pct}%)`;
                                 }
                             }
                         }
