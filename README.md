@@ -1,5 +1,11 @@
 # SpendWise — Personal Expense Tracker
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://spendwise-75bx.onrender.com)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Render-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
+🔗 **Live Application URL:** [https://spendwise-75bx.onrender.com](https://spendwise-75bx.onrender.com)
+
 SpendWise is a clean, modern, fully functional multi-user personal expense tracker built with **Java 17**, **Spring Boot 3**, **Spring Security**, and responsive vanilla **HTML5 / CSS3 / JavaScript**.
 
 Designed with a calm, professional aesthetic, living dynamic background effects, multi-currency support, robust user isolation, and rich visual analytics.
