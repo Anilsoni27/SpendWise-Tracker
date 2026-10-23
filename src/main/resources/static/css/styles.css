@@ -735,44 +735,6 @@ body {
     margin: 0 auto;
 }
 
-.pie-center-stat {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    pointer-events: none;
-    user-select: none;
-    max-width: 110px;
-    z-index: 2;
-}
-
-.pie-center-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-.pie-center-value {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    margin-top: 2px;
-    white-space: nowrap;
-}
-
 .bar-wrapper {
     height: 230px;
     flex-grow: 1;

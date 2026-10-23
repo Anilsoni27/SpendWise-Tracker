@@ -701,12 +701,6 @@
                 }
             }
 
-            // Update center stat inside circular chart
-            const pieCenterLabel = document.getElementById('pieCenterLabel');
-            const pieCenterTotal = document.getElementById('pieCenterTotal');
-            if (pieCenterLabel) pieCenterLabel.textContent = 'Total';
-            if (pieCenterTotal) pieCenterTotal.textContent = formatCurrency(grandTotal, targetCur);
-
             // Render custom legend
             elements.categoryLegend.innerHTML = '';
             if (data.length === 0) {
@@ -776,7 +770,7 @@
                         tooltip: {
                             enabled: true,
                             position: 'nearest',
-                            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(15, 23, 42, 0.95)',
+                            backgroundColor: isDark ? '#0B1120' : '#0F172A',
                             titleColor: '#F8FAFC',
                             titleFont: {
                                 size: 13,
