@@ -798,9 +798,11 @@
 
             const now = new Date();
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const todayIso = formatDateIso(todayStart);
+            const msPerDay = 1000 * 60 * 60 * 24;
 
             // Start date: from the day the account was created (or earliest logged expense)
-            let startDate = new Date(todayStart);
+            let joinDate = new Date(todayStart);
 
             if (state.currentUser && state.currentUser.createdAt) {
                 let regIso = state.currentUser.createdAt;
@@ -809,47 +811,46 @@
                 }
                 const regDate = new Date(regIso);
                 if (!isNaN(regDate.getTime())) {
-                    startDate = new Date(regDate.getFullYear(), regDate.getMonth(), regDate.getDate());
+                    joinDate = new Date(regDate.getFullYear(), regDate.getMonth(), regDate.getDate());
                 }
             }
 
-            // Also include earlier logged expenses if user entered a previous date
+            // Also check earliest recorded expense date in case user entered a past date
             if (state.expenses && state.expenses.length > 0) {
                 state.expenses.forEach(exp => {
                     if (exp.expenseDate) {
                         const parts = exp.expenseDate.split('-').map(Number);
                         if (parts.length === 3) {
                             const expD = new Date(parts[0], parts[1] - 1, parts[2]);
-                            if (expD < startDate) {
-                                startDate = expD;
+                            if (expD < joinDate) {
+                                joinDate = expD;
                             }
                         }
                     }
                 });
             }
 
-            // Cap the lookback to a maximum of 8 days
-            const maxDays = 8;
-            const maxLookback = new Date(todayStart);
-            maxLookback.setDate(todayStart.getDate() - (maxDays - 1));
-            if (startDate < maxLookback) {
-                startDate = maxLookback;
+            if (joinDate > todayStart) {
+                joinDate = new Date(todayStart);
             }
 
-            if (startDate > todayStart) {
-                startDate = new Date(todayStart);
-            }
+            const totalSlots = 8;
+            const daysSinceJoin = Math.max(0, Math.round((todayStart - joinDate) / msPerDay));
 
-            const msPerDay = 1000 * 60 * 60 * 24;
-            const diffDays = Math.round((todayStart - startDate) / msPerDay);
-            const daysCount = Math.min(maxDays, Math.max(1, diffDays + 1));
+            // Window timeline logic:
+            // 1. If account is brand new or < 7 days old, start from joinDate and display 8 dates forward
+            //    (e.g., today + 7 upcoming dates = 8 dates).
+            // 2. If account is 7+ days old, show past 7 days + today (ending at today, 8 dates total).
+            const windowStartDate = (daysSinceJoin < (totalSlots - 1))
+                ? new Date(joinDate)
+                : new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate() - (totalSlots - 1));
 
             // Dynamically update card title and subtitle
             if (elements.dailyChartTitle) {
-                if (daysCount === 1) {
-                    elements.dailyChartTitle.textContent = "Daily Spending (Today)";
-                } else if (daysCount < 8) {
-                    elements.dailyChartTitle.textContent = `Daily Spending (Past ${daysCount} Days)`;
+                if (daysSinceJoin === 0) {
+                    elements.dailyChartTitle.textContent = "Daily Spending (8-Day Window)";
+                } else if (daysSinceJoin < 7) {
+                    elements.dailyChartTitle.textContent = "Daily Spending (8-Day Timeline)";
                 } else {
                     elements.dailyChartTitle.textContent = "Daily Spending (Past 8 Days)";
                 }
@@ -857,31 +858,35 @@
 
             const subtitleEl = document.getElementById('dailyChartSubtitle');
             if (subtitleEl) {
-                if (daysCount === 1) {
-                    subtitleEl.textContent = "Spending recorded since joining today";
-                } else if (daysCount < 8) {
-                    subtitleEl.textContent = `Daily activity since joining (${daysCount} days)`;
+                if (daysSinceJoin === 0) {
+                    subtitleEl.textContent = "Projected 8-day timeline starting today";
+                } else if (daysSinceJoin < 7) {
+                    subtitleEl.textContent = `Daily timeline since joining (${daysSinceJoin + 1} days active)`;
                 } else {
-                    subtitleEl.textContent = "Trends and day-to-day fluctuations (8 days)";
+                    subtitleEl.textContent = "Daily spending trends over the past 8 days";
                 }
             }
 
             const dayMap = {};
             const dateList = [];
 
-            // Generate sequence from account creation day up to today
-            for (let i = daysCount - 1; i >= 0; i--) {
-                const d = new Date(todayStart);
-                d.setDate(todayStart.getDate() - i);
+            // Generate exactly 8 dates on the X-axis
+            for (let i = 0; i < totalSlots; i++) {
+                const d = new Date(windowStartDate);
+                d.setDate(windowStartDate.getDate() + i);
                 const iso = formatDateIso(d);
                 const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 dayMap[iso] = 0;
-                dateList.push({ iso, label });
+                dateList.push({
+                    iso: iso,
+                    label: label,
+                    isToday: (iso === todayIso),
+                    isFuture: (iso > todayIso),
+                    isPast: (iso < todayIso)
+                });
             }
 
-            let labels = [];
-            let amounts = [];
-
+            // Map all logged user expenses to their respective date slots
             if (state.expenses && state.expenses.length > 0) {
                 state.expenses.forEach(exp => {
                     if (dayMap.hasOwnProperty(exp.expenseDate)) {
@@ -889,23 +894,35 @@
                         dayMap[exp.expenseDate] += converted;
                     }
                 });
-                labels = dateList.map(item => item.label);
-                amounts = dateList.map(item => dayMap[item.iso]);
-            } else {
-                const todayIso = formatDateIso(now);
-                const data = await apiFetch(`/api/expenses/charts/daily?days=8&endDate=${todayIso}`);
-                if (!data) return;
-                labels = data.map(d => d.label);
-                amounts = data.map(d => convertAmount(d.amount, 'INR', targetCur));
             }
+
+            const labels = dateList.map(item => item.label);
+            const amounts = dateList.map(item => dayMap[item.iso]);
 
             if (state.dailyChartInstance) {
                 state.dailyChartInstance.destroy();
             }
 
             const isDark = (document.documentElement.getAttribute('data-theme') === 'dark');
-            const barBg = isDark ? '#A3E635' : '#0F172A';
-            const barHover = isDark ? '#BEF264' : '#A3E635';
+            const primaryBar = isDark ? '#A3E635' : '#0F172A';
+            const primaryHover = isDark ? '#BEF264' : '#334155';
+            const pastBar = isDark ? '#A3E635' : '#0F172A';
+            const pastHover = isDark ? '#BEF264' : '#334155';
+            const futureBar = isDark ? 'rgba(163, 230, 53, 0.25)' : 'rgba(15, 23, 42, 0.18)';
+            const futureHover = isDark ? 'rgba(190, 242, 100, 0.45)' : 'rgba(15, 23, 42, 0.3)';
+
+            const bgColors = dateList.map(item => {
+                if (item.isToday) return primaryBar;
+                if (item.isFuture) return futureBar;
+                return pastBar;
+            });
+
+            const hoverColors = dateList.map(item => {
+                if (item.isToday) return primaryHover;
+                if (item.isFuture) return futureHover;
+                return pastHover;
+            });
+
             const gridColor = isDark ? '#334155' : '#F1F5F9';
             const tickColor = isDark ? '#94A3B8' : '#64748B';
 
@@ -916,10 +933,10 @@
                     datasets: [{
                         label: 'Daily Spending',
                         data: amounts,
-                        backgroundColor: barBg,
-                        hoverBackgroundColor: barHover,
+                        backgroundColor: bgColors,
+                        hoverBackgroundColor: hoverColors,
                         borderRadius: 4,
-                        maxBarThickness: daysCount === 1 ? 52 : (daysCount <= 4 ? 42 : 36)
+                        maxBarThickness: 36
                     }]
                 },
                 options: {
@@ -936,6 +953,16 @@
                             borderColor: isDark ? '#334155' : '#334155',
                             borderWidth: 1,
                             callbacks: {
+                                title: function (tooltipItems) {
+                                    const idx = tooltipItems[0].dataIndex;
+                                    const item = dateList[idx];
+                                    if (item) {
+                                        if (item.isToday) return `${item.label} (Today)`;
+                                        if (item.isFuture) return `${item.label} (Upcoming)`;
+                                        return item.label;
+                                    }
+                                    return tooltipItems[0].label;
+                                },
                                 label: function (context) {
                                     return ` Total: ${formatCurrency(context.raw, targetCur)}`;
                                 }
