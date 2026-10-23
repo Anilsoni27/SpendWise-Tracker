@@ -658,8 +658,44 @@
 
     async function loadCategoryChart() {
         try {
-            const data = await apiFetch('/api/expenses/charts/categories');
             const targetCur = state.currentCurrency;
+            let data = [];
+
+            // If state.expenses is loaded, compute dynamic multi-currency breakdown:
+            if (state.expenses && state.expenses.length > 0) {
+                const catSums = {};
+                let grandTotal = 0;
+
+                state.expenses.forEach(exp => {
+                    const converted = convertAmount(exp.amount, exp.currency || 'INR', targetCur);
+                    grandTotal += converted;
+                    catSums[exp.category] = (catSums[exp.category] || 0) + converted;
+                });
+
+                for (const [catId, totalAmt] of Object.entries(catSums)) {
+                    const info = state.categoryMap[catId] || { displayName: catId, color: '#64748b' };
+                    const percentage = grandTotal > 0 ? Number(((totalAmt / grandTotal) * 100).toFixed(1)) : 0;
+                    data.push({
+                        id: catId,
+                        displayName: info.displayName,
+                        color: info.color,
+                        totalAmount: totalAmt,
+                        percentage: percentage
+                    });
+                }
+                data.sort((a, b) => b.totalAmount - a.totalAmount);
+            } else {
+                const rawData = await apiFetch('/api/expenses/charts/categories');
+                if (rawData && rawData.length > 0) {
+                    data = rawData.map(item => ({
+                        id: item.category,
+                        displayName: item.displayName,
+                        color: item.color,
+                        totalAmount: convertAmount(item.totalAmount, 'INR', targetCur),
+                        percentage: item.percentage
+                    }));
+                }
+            }
 
             // Render custom legend
             elements.categoryLegend.innerHTML = '';
@@ -667,7 +703,6 @@
                 elements.categoryLegend.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 10px;">No expense data yet</div>';
             } else {
                 data.forEach(item => {
-                    const convertedItemAmount = convertAmount(item.totalAmount, 'INR', targetCur);
                     const row = document.createElement('div');
                     row.className = 'legend-item';
                     row.innerHTML = `
@@ -676,7 +711,7 @@
                             <span>${escapeHtml(item.displayName)}</span>
                         </div>
                         <div class="legend-right">
-                            ${formatCurrency(convertedItemAmount, targetCur)} (${item.percentage}%)
+                            ${formatCurrency(item.totalAmount, targetCur)} (${item.percentage}%)
                         </div>
                     `;
                     elements.categoryLegend.appendChild(row);
@@ -687,6 +722,7 @@
             if (typeof Chart === 'undefined') return;
 
             const canvas = document.getElementById('categoryChart');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
             if (state.categoryChartInstance) {
@@ -694,7 +730,7 @@
             }
 
             const labels = data.map(d => d.displayName);
-            const amounts = data.map(d => convertAmount(d.totalAmount, 'INR', targetCur));
+            const amounts = data.map(d => d.totalAmount);
             const colors = data.map(d => d.color);
 
             if (data.length === 0) {
@@ -750,19 +786,51 @@
 
     async function loadDailyChart() {
         try {
-            const data = await apiFetch('/api/expenses/charts/daily?days=14');
             if (typeof Chart === 'undefined') return;
 
             const targetCur = state.currentCurrency;
             const canvas = document.getElementById('dailyChart');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
+
+            const now = new Date();
+            const daysCount = 14;
+            const dayMap = {};
+            const dateList = [];
+
+            // Compute past 14 days ending today in the browser's local timezone:
+            for (let i = daysCount - 1; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(now.getDate() - i);
+                const iso = formatDateIso(d);
+                const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                dayMap[iso] = 0;
+                dateList.push({ iso, label });
+            }
+
+            let labels = [];
+            let amounts = [];
+
+            if (state.expenses && state.expenses.length > 0) {
+                state.expenses.forEach(exp => {
+                    if (dayMap.hasOwnProperty(exp.expenseDate)) {
+                        const converted = convertAmount(exp.amount, exp.currency || 'INR', targetCur);
+                        dayMap[exp.expenseDate] += converted;
+                    }
+                });
+                labels = dateList.map(item => item.label);
+                amounts = dateList.map(item => dayMap[item.iso]);
+            } else {
+                const todayIso = formatDateIso(now);
+                const data = await apiFetch(`/api/expenses/charts/daily?days=14&endDate=${todayIso}`);
+                if (!data) return;
+                labels = data.map(d => d.label);
+                amounts = data.map(d => convertAmount(d.amount, 'INR', targetCur));
+            }
 
             if (state.dailyChartInstance) {
                 state.dailyChartInstance.destroy();
             }
-
-            const labels = data.map(d => d.label);
-            const amounts = data.map(d => convertAmount(d.amount, 'INR', targetCur));
 
             const isDark = (document.documentElement.getAttribute('data-theme') === 'dark');
             const barBg = isDark ? '#A3E635' : '#0F172A';

@@ -89,9 +89,10 @@ public class ExpenseRestController {
 
     @GetMapping("/charts/daily")
     public ResponseEntity<List<DailySpendingDto>> getDailySpending(
-            @RequestParam(defaultValue = "14") int days
+            @RequestParam(defaultValue = "14") int days,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return ResponseEntity.ok(expenseService.getDailySpending(days));
+        return ResponseEntity.ok(expenseService.getDailySpending(days, endDate));
     }
 
     @GetMapping("/export")

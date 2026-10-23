@@ -247,15 +247,25 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<DailySpendingDto> getDailySpending(int days) {
-        return getDailySpending(userService.getCurrentAuthenticatedUser(), days);
+        return getDailySpending(days, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailySpendingDto> getDailySpending(int days, LocalDate clientEndDate) {
+        return getDailySpending(userService.getCurrentAuthenticatedUser(), days, clientEndDate);
     }
 
     @Transactional(readOnly = true)
     public List<DailySpendingDto> getDailySpending(User user, int days) {
+        return getDailySpending(user, days, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailySpendingDto> getDailySpending(User user, int days, LocalDate clientEndDate) {
         if (days < 1) days = 14;
         if (days > 90) days = 90;
 
-        LocalDate endDate = LocalDate.now();
+        LocalDate endDate = (clientEndDate != null) ? clientEndDate : LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
 
         List<Object[]> rawList = expenseRepository.sumGroupedByDate(user, startDate, endDate);
